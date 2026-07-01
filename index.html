@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BRITS™ — A Life Simulation of a Plucky Island Nation</title>
+<style>
+  :root{
+    --navy:#012169; --red:#C8102E; --cream:#f4efe6; --sky:#8d99a6;
+    --good:#3fa34d; --mid:#e0a800; --bad:#c0392b;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; user-select:none;}
+  body{
+    font-family:"Segoe UI", system-ui, sans-serif;
+    background:linear-gradient(#6f7d8c 0%, #8d99a6 55%, #5b6672 100%);
+    color:#222; height:100vh; display:flex; flex-direction:column; overflow:hidden;
+  }
+  /* ---------- header ---------- */
+  header{
+    background:var(--navy); color:#fff; padding:8px 16px;
+    display:flex; align-items:center; gap:18px; flex-wrap:wrap;
+    border-bottom:4px solid var(--red); z-index:5;
+  }
+  .logo{font-size:26px; font-weight:900; letter-spacing:2px;}
+  .logo span{color:var(--red); background:#fff; padding:0 6px; margin-left:2px; border-radius:3px;}
+  .stat{background:rgba(255,255,255,.12); border-radius:6px; padding:4px 10px; font-size:14px; line-height:1.25;}
+  .stat b{display:block; font-size:16px;}
+  #money.neg b{color:#ff8080;}
+  #pmName{font-size:11px; opacity:.85; max-width:170px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  /* ---------- layout ---------- */
+  main{flex:1; display:flex; min-height:0;}
+  #world{flex:1; position:relative; display:flex; align-items:flex-end; justify-content:center; overflow:hidden;}
+  /* rain */
+  .drop{position:absolute; top:-30px; width:2px; height:18px; background:rgba(220,230,255,.45); animation:fall linear infinite;}
+  @keyframes fall{to{transform:translateY(110vh);}}
+  #sun{position:absolute; top:24px; right:60px; width:70px; height:70px; border-radius:50%;
+    background:radial-gradient(#fff6ac, #ffd34d); box-shadow:0 0 60px 25px rgba(255,220,80,.55); display:none;}
+  /* ---------- house ---------- */
+  #house{
+    position:relative; width:min(960px, 96%); height:340px; margin-bottom:10px;
+    background:#e8dcc8; border:6px solid #7a5c43; border-radius:8px 8px 0 0;
+    box-shadow:0 18px 30px rgba(0,0,0,.35);
+  }
+  #roof{
+    position:absolute; left:-30px; right:-30px; top:-46px; height:46px;
+    background:repeating-linear-gradient(90deg,#8a4a3b 0 26px,#7a3f32 26px 52px);
+    clip-path:polygon(0 100%, 4% 0, 96% 0, 100% 100%);
+  }
+  .room{position:absolute; top:0; bottom:0; border-left:5px solid #b9a586;}
+  .roomlabel{position:absolute; top:6px; left:10px; font-size:11px; font-weight:700; letter-spacing:1px; color:#9a8a6d;}
+  #floor{position:absolute; left:0; right:0; bottom:0; height:26px; background:repeating-linear-gradient(90deg,#a5793f 0 40px,#96702f 40px 80px);}
+  .spot{
+    position:absolute; bottom:26px; text-align:center; cursor:pointer; padding:4px 6px; border-radius:8px;
+    transition:transform .15s, background .15s;
+  }
+  .spot:hover{background:rgba(255,255,255,.55); transform:translateY(-3px);}
+  .spot .icon{font-size:44px; display:block; filter:drop-shadow(0 3px 2px rgba(0,0,0,.25));}
+  .spot .tag{font-size:10.5px; font-weight:700; color:#5c4a33; background:rgba(255,255,255,.7); border-radius:4px; padding:1px 4px;}
+  #radiator .icon{transition:filter .3s;}
+  .heat-on #radiator .icon{filter:drop-shadow(0 0 10px #ff7b00);}
+  /* ---------- character ---------- */
+  #brit{position:absolute; bottom:26px; width:60px; text-align:center; z-index:4; transition:left .3s linear;}
+  #plumbob{width:14px; height:14px; margin:0 auto 4px; background:var(--good); transform:rotate(45deg);
+    animation:bob 1.4s ease-in-out infinite; box-shadow:0 0 10px currentColor;}
+  @keyframes bob{50%{margin-top:-6px;}}
+  #sprite{font-size:46px; line-height:1; display:block;}
+  #bubble{
+    position:absolute; bottom:100%; left:50%; transform:translateX(-50%); margin-bottom:22px;
+    background:#fff; border:2px solid var(--navy); border-radius:10px; padding:3px 8px;
+    font-size:11.5px; font-weight:600; white-space:nowrap; display:none;
+  }
+  #progress{width:54px; height:6px; margin:3px auto 0; background:#00000033; border-radius:3px; overflow:hidden; visibility:hidden;}
+  #progress i{display:block; height:100%; width:0; background:var(--red); transition:width linear;}
+  /* ---------- side panel ---------- */
+  aside{
+    width:250px; background:var(--cream); border-left:4px solid var(--navy);
+    padding:14px 14px 8px; display:flex; flex-direction:column; gap:10px; overflow-y:auto;
+  }
+  aside h2{font-size:13px; letter-spacing:1.5px; color:var(--navy);}
+  .need label{font-size:12px; font-weight:700; display:flex; justify-content:space-between; color:#333;}
+  .bar{height:14px; background:#d8d0c0; border-radius:7px; overflow:hidden; margin-top:2px;}
+  .bar i{display:block; height:100%; width:50%; border-radius:7px; transition:width .3s, background .3s;}
+  #warnings{font-size:11.5px; font-weight:700; color:var(--bad); min-height:16px;}
+  .info{font-size:12px; background:#fff; border-radius:6px; padding:8px; line-height:1.5; border:1px solid #d8d0c0;}
+  #escapeBtn{
+    display:none; border:none; border-radius:8px; padding:10px; font-weight:800; font-size:13px; cursor:pointer;
+    background:linear-gradient(#ffd34d,#f0a500); box-shadow:0 3px 0 #b57e00; animation:pulse 1.2s infinite;
+  }
+  @keyframes pulse{50%{transform:scale(1.04);}}
+  /* ---------- ticker ---------- */
+  #ticker{
+    background:var(--red); color:#fff; font-weight:600; font-size:14px; padding:6px 0;
+    white-space:nowrap; overflow:hidden; border-top:3px solid #fff;
+  }
+  #ticker .label{background:#fff; color:var(--red); font-weight:900; padding:6px 10px; margin-right:12px;}
+  #tickertext{display:inline-block; padding-left:100%; animation:marquee 75s linear infinite;}
+  @keyframes marquee{to{transform:translateX(-100%);}}
+  /* ---------- toasts ---------- */
+  #toasts{position:absolute; top:14px; left:14px; z-index:9; display:flex; flex-direction:column; gap:8px; max-width:340px;}
+  .toast{
+    background:#fffdf5; border-left:6px solid var(--navy); border-radius:6px; padding:9px 12px;
+    font-size:13px; box-shadow:0 4px 14px rgba(0,0,0,.3); animation:slidein .25s ease-out; line-height:1.4;
+  }
+  .toast.bad{border-left-color:var(--bad);}
+  .toast.good{border-left-color:var(--good);}
+  .toast b{display:block; font-size:11px; letter-spacing:1px; color:#777;}
+  @keyframes slidein{from{transform:translateX(-30px); opacity:0;}}
+  /* ---------- overlay ---------- */
+  #overlay{
+    position:fixed; inset:0; background:rgba(1,33,105,.92); z-index:20; color:#fff;
+    display:flex; align-items:center; justify-content:center; text-align:center;
+  }
+  #overlay .card{max-width:620px; padding:30px;}
+  #overlay h1{font-size:52px; letter-spacing:4px;}
+  #overlay h1 span{color:#ffd34d;}
+  #overlay .sub{font-style:italic; margin:8px 0 18px; color:#cdd6ea;}
+  #overlay p{margin:10px 0; line-height:1.6; font-size:15px;}
+  #overlay .stats{background:rgba(255,255,255,.1); border-radius:10px; padding:14px; margin:16px 0; font-size:14px; line-height:1.9;}
+  #overlay button{
+    background:var(--red); color:#fff; border:none; font-size:18px; font-weight:800;
+    padding:14px 34px; border-radius:10px; cursor:pointer; box-shadow:0 4px 0 #7d0a1d;
+  }
+  #overlay button:hover{transform:translateY(-2px);}
+  .small{font-size:12px; opacity:.75; margin-top:14px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">BRITS<span>™</span></div>
+  <div class="stat">Day <b id="day">1</b></div>
+  <div class="stat" id="money">Bank balance <b>£120.00</b></div>
+  <div class="stat">Weather <b id="weather">🌧️ Rain</b></div>
+  <div class="stat">PMs survived <b id="pmCount">1</b><span id="pmName">Rt Hon Barnaby Fudge-Whistle</span></div>
+</header>
+
+<main>
+  <div id="world">
+    <div id="sun"></div>
+    <div id="toasts"></div>
+    <div id="house">
+      <div id="roof"></div>
+      <div class="roomlabel" style="left:12px">LOUNGE</div>
+      <div class="room" style="left:38%"><div class="roomlabel">KITCHEN</div></div>
+      <div class="room" style="left:72%"><div class="roomlabel">HALL</div></div>
+      <div id="floor"></div>
+
+      <div class="spot" id="tv"       style="left:3%"  title="Watch telly"><span class="icon">📺</span><span class="tag">Telly</span></div>
+      <div class="spot" id="sofa"     style="left:15%" title="Have a sit down"><span class="icon">🛋️</span><span class="tag">Sofa</span></div>
+      <div class="spot" id="radiator" style="left:28%" title="Toggle the heating"><span class="icon">♨️</span><span class="tag">Heating</span></div>
+      <div class="spot" id="kettle"   style="left:42%" title="Put the kettle on"><span class="icon">🫖</span><span class="tag">Kettle</span></div>
+      <div class="spot" id="fridge"   style="left:56%" title="Meal deal"><span class="icon">🧊</span><span class="tag">Fridge</span></div>
+      <div class="spot" id="laptop"   style="left:75%" title="Work from home"><span class="icon">💻</span><span class="tag">Work</span></div>
+      <div class="spot" id="door"     style="left:89%" title="Pop out"><span class="icon">🚪</span><span class="tag">Pop out</span></div>
+
+      <div id="brit" style="left:20%">
+        <div id="bubble"></div>
+        <div id="plumbob"></div>
+        <span id="sprite">🧍</span>
+        <div id="progress"><i></i></div>
+      </div>
+    </div>
+  </div>
+
+  <aside>
+    <h2>NEEDS OF THE NATION</h2>
+    <div class="need"><label>☕ Tea <span id="v-tea"></span></label><div class="bar"><i id="b-tea"></i></div></div>
+    <div class="need"><label>🥪 Food <span id="v-hunger"></span></label><div class="bar"><i id="b-hunger"></i></div></div>
+    <div class="need"><label>🔥 Warmth <span id="v-warmth"></span></label><div class="bar"><i id="b-warmth"></i></div></div>
+    <div class="need"><label><span id="moraleFace">😐</span> Morale <span id="v-morale"></span></label><div class="bar"><i id="b-morale"></i></div></div>
+    <div id="warnings"></div>
+    <div class="info" id="costs"></div>
+    <div class="info">🎯 <b>The Dream:</b> save <b>£2,000</b> for a one-way ticket somewhere with functioning trains.</div>
+    <button id="escapeBtn">✈️ BOOK ONE-WAY FLIGHT — £1,999</button>
+  </aside>
+</main>
+
+<div id="ticker"><span class="label">BREAKING</span><span id="tickertext"></span></div>
+
+<div id="overlay">
+  <div class="card" id="overlayCard">
+    <h1>BRITS<span>™</span></h1>
+    <div class="sub">A life simulation of a plucky island nation, going it alone.</div>
+    <p>Keep your Brit topped up on <b>tea, food, warmth and morale</b> while the bills climb,
+       the rain falls sideways, and the Prime Ministers rotate like a kebab.</p>
+    <p>Click things in the house to use them. Choose between <b>heating and eating</b>.
+       Survive the rolling news. And if you can save <b>£2,000</b>… there's always the airport.</p>
+    <button id="startBtn">START LIFE 🇬🇧</button>
+    <div class="small">Sunlit uplands sold separately. Terms apply. £350m/week not included.</div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ================= DATA ================= */
+const PM_FIRST = ["Rt Hon Barnaby","Sir Crispin","Baroness Prue","Dame Hetty","Sir Monty","Tarquin","Bunty","Rt Hon Piers","Sir Aubrey","Mavis","Lord Rupert","Rt Hon Jolyon"];
+const PM_LAST  = ["Fudge-Whistle","Snodgrass","Chumley-Brown","Trussington","Farquhar-Smythe","Bottomley","Pigeon","Marmaduke","Crumpet","Wetherby","Gove-Adjacent","Lettuce-Botham"];
+
+const HEADLINES = [
+  "Water company apologises for sewage, awards CEO record bonus",
+  "Lettuce outlasts another cabinet minister",
+  "Historic trade deal signed with very small island; GDP up 0.0002%",
+  "Passport queue now visible from space, says NASA",
+  "Energy price cap methodology changed to 'have a guess'",
+  "Train operator sorry for 'the inconvenience of existing'",
+  "Bus replacement service to be replaced by bus",
+  "£350m written on side of bus found down back of sofa",
+  "Government launches inquiry into previous inquiry",
+  "Britain announces bold plan to announce plan",
+  "Pothole on B4372 granted listed status after 9 years",
+  "New blue passport proudly printed in Poland",
+  "Queue forms outside Greggs; nobody can remember why",
+  "Sunlit uplands delayed due to leaves on the line",
+  "Exports of gravy granules 'weaponised' in EU talks",
+  "Minister insists £9 meal deal 'still a deal, technically'",
+  "River wins award for 'Most Improved Sewage'",
+  "UK to rejoin Eurovision voting bloc 'as a first step'",
+  "Heatwave declared at 21°C; nation ceases to function",
+  "White van man named interim Chancellor",
+  "Fish 'happier now they're British', claims peer",
+  "Study finds 94% of national mood determined by kettle",
+];
+
+const TV_COMFORT = [
+  "Bake Off: someone's soggy bottom unites the nation. +morale",
+  "Antiques Roadshow: man learns his vase is worth a used car. Lovely.",
+  "Repair Shop makes you cry about a teddy bear again.",
+  "Snooker. Hushed voices. Gentle applause. Bliss.",
+  "Countdown: you got a seven-letter word. Genius status confirmed.",
+];
+const TV_NEWS = [
+  "BREAKING: everything slightly worse than yesterday.",
+  "News: the pound dipped after the Chancellor sneezed.",
+  "Panel show argues about fish quotas for 40 minutes.",
+  "Correspondent stands in rain to confirm it is raining.",
+];
+const OUTINGS = [
+  {w:3, run:()=>{ S.queues++; bump({morale:+12}); toast("A QUEUE","Forty minutes. You didn't need anything. Magnificent queue though — one of the greats.","good"); }},
+  {w:3, run:()=>{ const p=S.pintPrice.toFixed(2); S.money-=S.pintPrice; S.pintPrice+=0.10; bump({morale:+18, warmth:+8}); toast("THE PUB",`A pint is now £${p}. You drink it in protest. Then have another, also in protest.`,"good"); }},
+  {w:3, run:()=>{ bump({warmth:-18, morale:-5}); toast("WEATHER","The heavens open the moment you step out. No coat, obviously. Classic.","bad"); }},
+  {w:2, run:()=>{ S.money-=3; bump({hunger:+18, morale:+7}); toast("YELLOW STICKERS","Reduced-section triumph: 4 crumpets, a mystery quiche, and dignity, all for £3.","good"); }},
+  {w:3, run:()=>{ bump({morale:+9}); toast("SMALL TALK","Discussed the weather with a neighbour for 25 minutes. Verdict, jointly reached: 'mad, isn't it'.","good"); }},
+  {w:1, run:()=>{ S.money-=12; bump({morale:-6}); toast("POTHOLE","A pothole the size of a paddling pool eats your tyre. The council thanks you for your feedback.","bad"); }},
+];
+
+const EVENTS = [
+  {w:3, run:()=>{ S.pmCount++; S.pmName = pick(PM_FIRST)+" "+pick(PM_LAST); bump({morale:+5});
+      toast("NEW PRIME MINISTER",`${S.pmName} enters No.10 promising 'stability'. You feel a flicker of hope. It passes.`,""); }},
+  {w:2, run:()=>{ S.bills=Math.round(S.bills*1.18); bump({morale:-8});
+      toast("ENERGY PRICE CAP",`The cap rises again "to protect consumers". Bills now £${S.bills}/day. The radiator watches you smugly.`,"bad"); }},
+  {w:2, run:()=>{ bump({morale:-6}); toast("TRAIN STRIKE","All trains cancelled. You weren't going anywhere, but it's the principle of the thing.","bad"); }},
+  {w:1, run:()=>{ setWeather("sun"); bump({morale:+25});
+      toast("SUNNY SPELL","20°C. The nation loses its mind. Every barbecue in a 3-mile radius ignites simultaneously.","good"); }},
+  {w:2, run:()=>{ S.mealPrice+=0.60; bump({morale:-4});
+      toast("SHRINKFLATION",`Your favourite crisps: same bag, six crisps. Meal deal now £${S.mealPrice.toFixed(2)}. "A deal," insists the shop.`,"bad"); }},
+  {w:2, run:()=>{ S.queues++; bump({morale:+12}); toast("MYSTERY QUEUE","A queue has formed on the high street. Nobody knows what for. You join it immediately. Wonderful.","good"); }},
+  {w:2, run:()=>{ bump({morale:-8}); toast("SEWAGE ALERT","The local river has been reclassified as 'chunky'. Swimming discouraged; wading unthinkable.","bad"); }},
+  {w:1, run:()=>{ bump({morale:-6}); toast("BIN DAY","The bin day changed without warning. Yours was the only bin not out. The street knows. The street remembers.","bad"); }},
+  {w:1, run:()=>{ bump({morale:+8}); toast("ROYAL OCCASION","Someone royal waved from a car. Bunting deployed within minutes. Street party in light drizzle. Perfect.","good"); }},
+  {w:1, run:()=>{ S.bills+=4; bump({morale:-5}); toast("INTEREST RATES","Rates rise again. You don't fully understand it, but everyone on telly looks worried, so you are too.","bad"); }},
+  {w:1, run:()=>{ bump({morale:+6}); toast("THE LETTUCE","A supermarket lettuce has now outlasted three ministers and a regional airline. It gives a press conference.","good"); }},
+];
+
+/* ================= STATE ================= */
+const DAY_LEN = 45;            // seconds per day
+let S;
+function freshState(){
+  return {
+    running:false, over:false, busy:false,
+    day:1, dayT:0, evT:12,
+    pmCount:1, pmName:"Rt Hon Barnaby Fudge-Whistle",
+    money:120, bills:42, mealPrice:5.49, pintPrice:7.20,
+    teas:0, queues:0,
+    heating:false, weather:"rain",
+    needs:{tea:70, hunger:70, warmth:65, morale:60},
+  };
+}
+
+/* ================= HELPERS ================= */
+const $ = id => document.getElementById(id);
+const pick = a => a[Math.floor(Math.random()*a.length)];
+function pickW(list){
+  const tot = list.reduce((s,e)=>s+e.w,0);
+  let r = Math.random()*tot;
+  for(const e of list){ if((r-=e.w)<0) return e; }
+  return list[0];
+}
+function clamp(v){ return Math.max(0, Math.min(100, v)); }
+function bump(d){ for(const k in d) S.needs[k]=clamp(S.needs[k]+d[k]); }
+
+function toast(title, msg, cls){
+  const t = document.createElement("div");
+  t.className = "toast "+(cls||"");
+  t.innerHTML = "<b>"+title+"</b>"+msg;
+  $("toasts").appendChild(t);
+  setTimeout(()=>{ t.style.opacity=0; t.style.transition="opacity .5s"; setTimeout(()=>t.remove(),500); }, 5200);
+  while($("toasts").children.length>4) $("toasts").firstChild.remove();
+}
+
+/* ================= WEATHER ================= */
+function setWeather(w){
+  S.weather = w;
+  const labels = {rain:"🌧️ Rain", drizzle:"🌦️ Drizzle", overcast:"☁️ Overcast", sun:"☀️ SUN?!"};
+  $("weather").textContent = labels[w];
+  $("sun").style.display = w==="sun" ? "block" : "none";
+  document.querySelectorAll(".drop").forEach(d=>d.remove());
+  if(w==="rain"||w==="drizzle"){
+    const n = w==="rain" ? 70 : 25;
+    for(let i=0;i<n;i++){
+      const d=document.createElement("div"); d.className="drop";
+      d.style.left = Math.random()*100+"vw";
+      d.style.animationDuration = (0.6+Math.random()*0.7)+"s";
+      d.style.animationDelay = Math.random()*2+"s";
+      $("world").appendChild(d);
+    }
+  }
+}
+function rollWeather(){
+  const r=Math.random();
+  setWeather(r<0.55 ? "rain" : r<0.75 ? "drizzle" : r<0.95 ? "overcast" : "sun");
+}
+
+/* ================= CHARACTER / ACTIONS ================= */
+function walkTo(pct, then){
+  const brit=$("brit"), from=parseFloat(brit.style.left), dist=Math.abs(pct-from);
+  const dur=Math.max(0.25, dist/28);          // ~28% of house per second
+  $("sprite").textContent="🚶";
+  brit.style.transition=`left ${dur}s linear`;
+  brit.style.left=pct+"%";
+  setTimeout(()=>{ $("sprite").textContent="🧍"; then(); }, dur*1000);
+}
+function doAction(spotPct, label, seconds, done){
+  if(S.busy || S.over || !S.running) return;
+  S.busy=true;
+  walkTo(spotPct, ()=>{
+    if(S.over){S.busy=false; return;}
+    const bub=$("bubble"); bub.textContent=label; bub.style.display="block";
+    const bar=$("progress"), fill=bar.firstElementChild;
+    bar.style.visibility="visible"; fill.style.transition="none"; fill.style.width="0";
+    requestAnimationFrame(()=>{ fill.style.transition=`width ${seconds}s linear`; fill.style.width="100%"; });
+    setTimeout(()=>{
+      bub.style.display="none"; bar.style.visibility="hidden"; fill.style.width="0";
+      S.busy=false; if(!S.over) done();
+    }, seconds*1000);
+  });
+}
+
+const ACTIONS = {
+  kettle: ()=>doAction(42,"Putting the kettle on…",2.5,()=>{
+    S.teas++; bump({tea:+45, morale:+8});
+    if(Math.random()<0.12) toast("KETTLE","Half-time. Every kettle in Britain switches on at once. The National Grid holds. Just.","good");
+    else if(Math.random()<0.15){ bump({morale:+4}); toast("KETTLE","Milk's off. Emergency UHT deployed. It's fine. Everything is fine.",""); }
+  }),
+  fridge: ()=>doAction(56,"Assembling a meal deal…",2,()=>{
+    S.money-=S.mealPrice; bump({hunger:+40, morale:+3});
+    toast("MEAL DEAL",`Sandwich, snack, drink: £${S.mealPrice.toFixed(2)}. The sandwich is 60% air. The air is British.`,"");
+  }),
+  radiator: ()=>doAction(28, S.heating?"Turning heating off…":"Turning heating on…",1,()=>{
+    S.heating=!S.heating;
+    document.body.classList.toggle("heat-on", S.heating);
+    toast("HEATING", S.heating
+      ? "Radiator on. You can almost hear the smart meter laughing."
+      : "Heating off. Time for the traditional Big Coat Indoors.", S.heating?"":"bad");
+  }),
+  tv: ()=>doAction(3,"Watching telly…",4,()=>{
+    if(Math.random()<0.6){ bump({morale:+14}); toast("TELLY",pick(TV_COMFORT),"good"); }
+    else { bump({morale:-10}); toast("THE NEWS",pick(TV_NEWS),"bad"); }
+  }),
+  sofa: ()=>doAction(15,"Having a little sit down…",5,()=>{
+    bump({morale:+10, warmth:+6});
+    toast("SOFA","A little sit down. Not a nap — you were just resting your eyes.","good");
+  }),
+  laptop: ()=>doAction(75,"Logging on… (3 Teams calls)",6,()=>{
+    let wage=115;
+    if(Math.random()<0.15){ wage=80; toast("PAYSLIP","Wages docked: 'administrative recalibration levy'. No further details available.","bad"); }
+    S.money+=wage; bump({tea:-15, morale:-6});
+    toast("WORK",`A hard day's WFH. £${wage} earned. Someone said "let's take this offline" while already online.`,"");
+  }),
+  door: ()=>doAction(89,"Popping out…",5,()=>pickW(OUTINGS).run()),
+};
+
+/* ================= GAME LOOP ================= */
+let loop=null;
+function tick(){
+  const dt=0.2;
+  // decay
+  S.needs.tea    = clamp(S.needs.tea    - 1.05*dt);
+  S.needs.hunger = clamp(S.needs.hunger - 0.55*dt);
+  const cold = S.weather==="rain" ? 1.0 : S.weather==="sun" ? 0.35 : 0.7;
+  S.needs.warmth = clamp(S.needs.warmth + (S.heating ? +2.2 : -cold)*dt);
+  let mDecay = 0.32;
+  if(S.needs.tea<15)    mDecay+=0.55;   // a Brit without tea is a hazard
+  if(S.needs.hunger<15) mDecay+=0.5;
+  if(S.needs.warmth<15) mDecay+=0.6;
+  S.needs.morale = clamp(S.needs.morale - mDecay*dt);
+  if(S.heating) S.money -= 0.16*dt*5;   // £0.16/s — the meter spins like a fruit machine
+
+  // day
+  S.dayT+=dt;
+  if(S.dayT>=DAY_LEN){
+    S.dayT=0; S.day++;
+    S.money-=S.bills;
+    S.mealPrice*=1.012;
+    rollWeather();
+    toast("NEW DAY",`Day ${S.day}. Bills paid: £${S.bills}. The meal deal quietly rises to £${S.mealPrice.toFixed(2)}. Nobody voted for this specifically.`, "");
+  }
+
+  // events
+  S.evT-=dt;
+  if(S.evT<=0){ S.evT=15+Math.random()*10; pickW(EVENTS).run(); }
+
+  render();
+
+  // endings
+  if(S.needs.morale<=0) gameOver("EMIGRATED",
+    "Your Brit's morale finally gave out. They've moved to Australia, where they now complain about the heat, the spiders, and — inexplicably — miss the queues.");
+  else if(S.money<=-500) gameOver("OVERDRAWN",
+    "The overdraft has achieved sentience and repossessed the sofa. Your Brit has moved back in with their mum, aged 47. The kettle survives.");
+  else if(S.money>=2000) $("escapeBtn").style.display="block";
+}
+
+function render(){
+  for(const k of ["tea","hunger","warmth","morale"]){
+    const v=S.needs[k], bar=$("b-"+k);
+    bar.style.width=v+"%";
+    bar.style.background = v>55 ? "var(--good)" : v>25 ? "var(--mid)" : "var(--bad)";
+    $("v-"+k).textContent=Math.round(v);
+  }
+  const avg=(S.needs.tea+S.needs.hunger+S.needs.warmth+S.needs.morale)/4;
+  $("plumbob").style.background = avg>55 ? "var(--good)" : avg>28 ? "var(--mid)" : "var(--bad)";
+  $("plumbob").style.color = avg>55 ? "#3fa34d" : avg>28 ? "#e0a800" : "#c0392b";
+  const m=S.needs.morale;
+  $("moraleFace").textContent = m>75?"😄":m>50?"🙂":m>30?"😐":m>12?"☹️":"😭";
+  $("day").textContent=S.day;
+  $("pmCount").textContent=S.pmCount;
+  $("pmName").textContent=S.pmName;
+  const mon=$("money");
+  mon.classList.toggle("neg", S.money<0);
+  mon.querySelector("b").textContent = (S.money<0?"−£":"£")+Math.abs(S.money).toFixed(2);
+  $("costs").innerHTML =
+    `💷 Bills: <b>£${S.bills}/day</b><br>🥪 Meal deal: <b>£${S.mealPrice.toFixed(2)}</b><br>` +
+    `♨️ Heating: <b>${S.heating?"ON (£48/day-ish)":"off (wear the Big Coat)"}</b>`;
+  const warn=[];
+  if(S.needs.tea<15) warn.push("⚠️ TEA CRITICAL — society at risk");
+  if(S.needs.warmth<15) warn.push("🥶 Freezing — heat or eat?");
+  if(S.needs.hunger<15) warn.push("🍞 Running on toast fumes");
+  $("warnings").innerHTML = warn.join("<br>");
+}
+
+/* ================= ENDINGS ================= */
+function statsBlock(){
+  return `<div class="stats">📅 Days survived: <b>${S.day}</b><br>☕ Cups of tea: <b>${S.teas}</b><br>` +
+    `🚶 Queues joined: <b>${S.queues}</b><br>🏛️ Prime Ministers outlasted: <b>${S.pmCount}</b><br>` +
+    `💷 Final balance: <b>${(S.money<0?"−£":"£")+Math.abs(S.money).toFixed(2)}</b></div>`;
+}
+function gameOver(title, text){
+  if(S.over) return;
+  S.over=true; clearInterval(loop);
+  $("overlayCard").innerHTML =
+    `<h1>${title}</h1><div class="sub">Rule Britannia, etc.</div><p>${text}</p>${statsBlock()}` +
+    `<button onclick="startGame()">HAVE ANOTHER GO 🫖</button>` +
+    `<div class="small">The inquiry into what went wrong will report in 2043.</div>`;
+  $("overlay").style.display="flex";
+}
+function winGame(){
+  if(S.over) return;
+  S.over=true; clearInterval(loop); S.money-=1999;
+  $("overlayCard").innerHTML =
+    `<h1>ESCAPED! <span>✈️</span></h1><div class="sub">One-way to Lisbon. 90 days at a time, obviously. There are rules now.</div>` +
+    `<p>Your Brit has fled to the Continent, where they will spend the rest of their days enjoying functioning trains, ` +
+    `affordable cheese, and telling everyone how much they miss Greggs.</p>${statsBlock()}` +
+    `<button onclick="startGame()">START AGAIN, YOU MASOCHIST 🇬🇧</button>` +
+    `<div class="small">You still think about the queues. The beautiful, beautiful queues.</div>`;
+  $("overlay").style.display="flex";
+}
+
+/* ================= BOOT ================= */
+function startGame(){
+  clearInterval(loop);
+  S = freshState();
+  S.running=true;
+  document.body.classList.remove("heat-on");
+  $("overlay").style.display="none";
+  $("escapeBtn").style.display="none";
+  $("toasts").innerHTML="";
+  $("brit").style.transition="none";
+  $("brit").style.left="20%";
+  setWeather("rain");
+  render();
+  toast("WELCOME HOME","It's raining. The bills are due. The kettle awaits. You've never felt more alive.","good");
+  loop=setInterval(tick, 200);
+}
+
+for(const id in ACTIONS) $(id).addEventListener("click", ACTIONS[id]);
+$("escapeBtn").addEventListener("click", winGame);
+$("startBtn").addEventListener("click", startGame);
+$("tickertext").textContent = "  "+HEADLINES.sort(()=>Math.random()-0.5).join("   •••   ")+"   •••";
+</script>
+</body>
+</html>
