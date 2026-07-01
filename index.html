@@ -4,187 +4,164 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BRITS™ — A Life Simulation of a Plucky Island Nation</title>
+<!-- v2.0 isometric -->
 <style>
   :root{
-    --navy:#012169; --red:#C8102E; --cream:#f4efe6; --sky:#8d99a6;
-    --good:#3fa34d; --mid:#e0a800; --bad:#c0392b;
+    --navy:#012169; --navy2:#0a3180; --red:#C8102E; --cream:#f4efe6;
+    --good:#4cc25c; --mid:#e8b322; --bad:#d9463c; --panel:#10275f;
   }
   *{box-sizing:border-box; margin:0; padding:0; user-select:none;}
+  html,body{height:100%;}
   body{
     font-family:"Segoe UI", system-ui, sans-serif;
-    background:linear-gradient(#6f7d8c 0%, #8d99a6 55%, #5b6672 100%);
-    color:#222; height:100vh; display:flex; flex-direction:column; overflow:hidden;
+    background:linear-gradient(#5d6f82 0%, #7c8b9b 60%, #4e5a66 100%);
+    color:#222; display:flex; flex-direction:column; overflow:hidden;
   }
-  /* ---------- header ---------- */
+  /* ---------- header + ticker ---------- */
   header{
-    background:var(--navy); color:#fff; padding:8px 16px;
-    display:flex; align-items:center; gap:18px; flex-wrap:wrap;
-    border-bottom:4px solid var(--red); z-index:5;
+    background:var(--navy); color:#fff; padding:5px 14px;
+    display:flex; align-items:center; gap:14px; z-index:5;
   }
-  .logo{font-size:26px; font-weight:900; letter-spacing:2px;}
-  .logo span{color:var(--red); background:#fff; padding:0 6px; margin-left:2px; border-radius:3px;}
-  .stat{background:rgba(255,255,255,.12); border-radius:6px; padding:4px 10px; font-size:14px; line-height:1.25;}
-  .stat b{display:block; font-size:16px;}
-  #money.neg b{color:#ff8080;}
-  #pmName{font-size:11px; opacity:.85; max-width:170px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  /* ---------- layout ---------- */
-  main{flex:1; display:flex; min-height:0;}
-  #world{flex:1; position:relative; display:flex; align-items:flex-end; justify-content:center; overflow:hidden;}
-  /* rain */
-  .drop{position:absolute; top:-30px; width:2px; height:18px; background:rgba(220,230,255,.45); animation:fall linear infinite;}
-  @keyframes fall{to{transform:translateY(110vh);}}
-  #sun{position:absolute; top:24px; right:60px; width:70px; height:70px; border-radius:50%;
-    background:radial-gradient(#fff6ac, #ffd34d); box-shadow:0 0 60px 25px rgba(255,220,80,.55); display:none;}
-  /* ---------- house ---------- */
-  #house{
-    position:relative; width:min(960px, 96%); height:340px; margin-bottom:10px;
-    background:#e8dcc8; border:6px solid #7a5c43; border-radius:8px 8px 0 0;
-    box-shadow:0 18px 30px rgba(0,0,0,.35);
-  }
-  #roof{
-    position:absolute; left:-30px; right:-30px; top:-46px; height:46px;
-    background:repeating-linear-gradient(90deg,#8a4a3b 0 26px,#7a3f32 26px 52px);
-    clip-path:polygon(0 100%, 4% 0, 96% 0, 100% 100%);
-  }
-  .room{position:absolute; top:0; bottom:0; border-left:5px solid #b9a586;}
-  .roomlabel{position:absolute; top:6px; left:10px; font-size:11px; font-weight:700; letter-spacing:1px; color:#9a8a6d;}
-  #floor{position:absolute; left:0; right:0; bottom:0; height:26px; background:repeating-linear-gradient(90deg,#a5793f 0 40px,#96702f 40px 80px);}
-  .spot{
-    position:absolute; bottom:26px; text-align:center; cursor:pointer; padding:4px 6px; border-radius:8px;
-    transition:transform .15s, background .15s;
-  }
-  .spot:hover{background:rgba(255,255,255,.55); transform:translateY(-3px);}
-  .spot .icon{font-size:44px; display:block; filter:drop-shadow(0 3px 2px rgba(0,0,0,.25));}
-  .spot .tag{font-size:10.5px; font-weight:700; color:#5c4a33; background:rgba(255,255,255,.7); border-radius:4px; padding:1px 4px;}
-  #radiator .icon{transition:filter .3s;}
-  .heat-on #radiator .icon{filter:drop-shadow(0 0 10px #ff7b00);}
-  /* ---------- character ---------- */
-  #brit{position:absolute; bottom:26px; width:60px; text-align:center; z-index:4; transition:left .3s linear;}
-  #plumbob{width:14px; height:14px; margin:0 auto 4px; background:var(--good); transform:rotate(45deg);
-    animation:bob 1.4s ease-in-out infinite; box-shadow:0 0 10px currentColor;}
-  @keyframes bob{50%{margin-top:-6px;}}
-  #sprite{font-size:46px; line-height:1; display:block;}
-  #bubble{
-    position:absolute; bottom:100%; left:50%; transform:translateX(-50%); margin-bottom:22px;
-    background:#fff; border:2px solid var(--navy); border-radius:10px; padding:3px 8px;
-    font-size:11.5px; font-weight:600; white-space:nowrap; display:none;
-  }
-  #progress{width:54px; height:6px; margin:3px auto 0; background:#00000033; border-radius:3px; overflow:hidden; visibility:hidden;}
-  #progress i{display:block; height:100%; width:0; background:var(--red); transition:width linear;}
-  /* ---------- side panel ---------- */
-  aside{
-    width:250px; background:var(--cream); border-left:4px solid var(--navy);
-    padding:14px 14px 8px; display:flex; flex-direction:column; gap:10px; overflow-y:auto;
-  }
-  aside h2{font-size:13px; letter-spacing:1.5px; color:var(--navy);}
-  .need label{font-size:12px; font-weight:700; display:flex; justify-content:space-between; color:#333;}
-  .bar{height:14px; background:#d8d0c0; border-radius:7px; overflow:hidden; margin-top:2px;}
-  .bar i{display:block; height:100%; width:50%; border-radius:7px; transition:width .3s, background .3s;}
-  #warnings{font-size:11.5px; font-weight:700; color:var(--bad); min-height:16px;}
-  .info{font-size:12px; background:#fff; border-radius:6px; padding:8px; line-height:1.5; border:1px solid #d8d0c0;}
-  #escapeBtn{
-    display:none; border:none; border-radius:8px; padding:10px; font-weight:800; font-size:13px; cursor:pointer;
-    background:linear-gradient(#ffd34d,#f0a500); box-shadow:0 3px 0 #b57e00; animation:pulse 1.2s infinite;
-  }
-  @keyframes pulse{50%{transform:scale(1.04);}}
-  /* ---------- ticker ---------- */
+  .logo{font-size:20px; font-weight:900; letter-spacing:2px;}
+  .logo span{color:var(--red); background:#fff; padding:0 5px; margin-left:2px; border-radius:3px; font-size:15px;}
+  #headSub{font-size:11px; opacity:.7; font-style:italic;}
   #ticker{
-    background:var(--red); color:#fff; font-weight:600; font-size:14px; padding:6px 0;
-    white-space:nowrap; overflow:hidden; border-top:3px solid #fff;
+    background:var(--red); color:#fff; font-weight:600; font-size:12.5px; padding:4px 0;
+    white-space:nowrap; overflow:hidden; border-bottom:2px solid #fff; z-index:5;
   }
-  #ticker .label{background:#fff; color:var(--red); font-weight:900; padding:6px 10px; margin-right:12px;}
-  #tickertext{display:inline-block; padding-left:100%; animation:marquee 75s linear infinite;}
+  #ticker .label{background:#fff; color:var(--red); font-weight:900; padding:4px 8px; margin-right:10px;}
+  #tickertext{display:inline-block; padding-left:100%; animation:marquee 80s linear infinite;}
   @keyframes marquee{to{transform:translateX(-100%);}}
+  /* ---------- world ---------- */
+  #stage{flex:1; position:relative; min-height:0;}
+  canvas{position:absolute; inset:0; width:100%; height:100%; display:block; cursor:pointer;}
   /* ---------- toasts ---------- */
-  #toasts{position:absolute; top:14px; left:14px; z-index:9; display:flex; flex-direction:column; gap:8px; max-width:340px;}
+  #toasts{position:absolute; top:10px; right:12px; z-index:9; display:flex; flex-direction:column; gap:7px; max-width:330px; pointer-events:none;}
   .toast{
-    background:#fffdf5; border-left:6px solid var(--navy); border-radius:6px; padding:9px 12px;
-    font-size:13px; box-shadow:0 4px 14px rgba(0,0,0,.3); animation:slidein .25s ease-out; line-height:1.4;
+    background:#fffdf5; border-left:6px solid var(--navy); border-radius:6px; padding:8px 11px;
+    font-size:12.5px; box-shadow:0 4px 14px rgba(0,0,0,.35); animation:slidein .25s ease-out; line-height:1.4;
   }
-  .toast.bad{border-left-color:var(--bad);}
-  .toast.good{border-left-color:var(--good);}
-  .toast b{display:block; font-size:11px; letter-spacing:1px; color:#777;}
-  @keyframes slidein{from{transform:translateX(-30px); opacity:0;}}
+  .toast.bad{border-left-color:var(--bad);} .toast.good{border-left-color:var(--good);}
+  .toast b{display:block; font-size:10.5px; letter-spacing:1px; color:#777;}
+  @keyframes slidein{from{transform:translateX(30px); opacity:0;}}
+  /* ---------- pie menu ---------- */
+  #pie{
+    position:absolute; z-index:10; display:none; flex-direction:column; gap:4px;
+    transform:translate(-50%, -100%); filter:drop-shadow(0 6px 12px rgba(0,0,0,.45));
+  }
+  #pie button{
+    border:2px solid #fff; border-radius:18px; background:linear-gradient(#2b57c9,#123387);
+    color:#fff; font-size:12.5px; font-weight:700; padding:7px 14px; cursor:pointer; white-space:nowrap;
+    text-align:left; font-family:inherit;
+  }
+  #pie button:hover{background:linear-gradient(#3f6ce0,#1c44a8); transform:scale(1.04);}
+  #pie .pietitle{
+    text-align:center; color:#fff; font-size:11px; font-weight:800; letter-spacing:1px;
+    background:var(--red); border-radius:10px; padding:2px 8px; border:2px solid #fff;
+  }
+  /* ---------- bottom panel (Sims-style) ---------- */
+  #panel{
+    background:linear-gradient(#1c3a86, var(--panel) 30%, #0a1c48);
+    border-top:3px solid #4a6bc4; color:#fff; padding:8px 14px 10px; z-index:5;
+    display:flex; gap:16px; align-items:center; flex-wrap:wrap;
+  }
+  #portrait{
+    width:74px; height:74px; border-radius:12px; border:3px solid #4a6bc4; flex:none;
+    background:radial-gradient(#3b5bb5,#162d6e 90%);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  }
+  #face{font-size:34px; line-height:1;}
+  #pname{font-size:10.5px; font-weight:800; letter-spacing:.5px; color:#cfe0ff; text-align:center;}
+  #needsGrid{display:grid; grid-template-columns:repeat(3, 150px); gap:4px 14px;}
+  .need label{font-size:10.5px; font-weight:800; display:flex; justify-content:space-between; color:#cfe0ff; letter-spacing:.5px;}
+  .bar{height:10px; background:#081538; border-radius:5px; overflow:hidden; margin-top:1px; border:1px solid #33509c;}
+  .bar i{display:block; height:100%; width:50%; border-radius:5px; transition:width .25s, background .25s;}
+  #infoCol{font-size:12px; line-height:1.55; color:#cfe0ff; min-width:170px;}
+  #infoCol b{color:#fff;}
+  #money.neg b{color:#ff9a9a;}
+  #rightCol{margin-left:auto; display:flex; flex-direction:column; gap:6px; align-items:flex-end;}
+  #speed{display:flex; gap:4px;}
+  #speed button{
+    width:34px; height:28px; border-radius:6px; border:2px solid #4a6bc4; background:#0c2158; color:#9db4e8;
+    font-weight:900; cursor:pointer; font-size:12px; font-family:inherit;
+  }
+  #speed button.on{background:var(--red); color:#fff; border-color:#fff;}
+  #warnings{font-size:11px; font-weight:700; color:#ffb0a8; text-align:right; min-height:14px; max-width:230px;}
+  #escapeBtn{
+    display:none; border:none; border-radius:8px; padding:8px 12px; font-weight:800; font-size:12px; cursor:pointer;
+    background:linear-gradient(#ffd34d,#f0a500); box-shadow:0 3px 0 #b57e00; animation:pulse 1.2s infinite; font-family:inherit;
+  }
+  @keyframes pulse{50%{transform:scale(1.05);}}
   /* ---------- overlay ---------- */
   #overlay{
-    position:fixed; inset:0; background:rgba(1,33,105,.92); z-index:20; color:#fff;
+    position:fixed; inset:0; background:rgba(1,33,105,.93); z-index:20; color:#fff;
     display:flex; align-items:center; justify-content:center; text-align:center;
   }
-  #overlay .card{max-width:620px; padding:30px;}
-  #overlay h1{font-size:52px; letter-spacing:4px;}
+  #overlay .card{max-width:640px; padding:30px;}
+  #overlay h1{font-size:48px; letter-spacing:4px;}
   #overlay h1 span{color:#ffd34d;}
-  #overlay .sub{font-style:italic; margin:8px 0 18px; color:#cdd6ea;}
-  #overlay p{margin:10px 0; line-height:1.6; font-size:15px;}
-  #overlay .stats{background:rgba(255,255,255,.1); border-radius:10px; padding:14px; margin:16px 0; font-size:14px; line-height:1.9;}
+  #overlay .sub{font-style:italic; margin:8px 0 16px; color:#cdd6ea;}
+  #overlay p{margin:10px 0; line-height:1.6; font-size:14.5px;}
+  #overlay .stats{background:rgba(255,255,255,.1); border-radius:10px; padding:12px; margin:14px 0; font-size:13.5px; line-height:1.9;}
   #overlay button{
-    background:var(--red); color:#fff; border:none; font-size:18px; font-weight:800;
-    padding:14px 34px; border-radius:10px; cursor:pointer; box-shadow:0 4px 0 #7d0a1d;
+    background:var(--red); color:#fff; border:none; font-size:17px; font-weight:800;
+    padding:13px 32px; border-radius:10px; cursor:pointer; box-shadow:0 4px 0 #7d0a1d; font-family:inherit;
   }
   #overlay button:hover{transform:translateY(-2px);}
-  .small{font-size:12px; opacity:.75; margin-top:14px;}
+  .small{font-size:11.5px; opacity:.75; margin-top:12px;}
 </style>
 </head>
 <body>
 
 <header>
   <div class="logo">BRITS<span>™</span></div>
-  <div class="stat">Day <b id="day">1</b></div>
-  <div class="stat" id="money">Bank balance <b>£120.00</b></div>
-  <div class="stat">Weather <b id="weather">🌧️ Rain</b></div>
-  <div class="stat">PMs survived <b id="pmCount">1</b><span id="pmName">Rt Hon Barnaby Fudge-Whistle</span></div>
+  <div id="headSub">A life simulation of a plucky island nation, going it alone.</div>
 </header>
-
-<main>
-  <div id="world">
-    <div id="sun"></div>
-    <div id="toasts"></div>
-    <div id="house">
-      <div id="roof"></div>
-      <div class="roomlabel" style="left:12px">LOUNGE</div>
-      <div class="room" style="left:38%"><div class="roomlabel">KITCHEN</div></div>
-      <div class="room" style="left:72%"><div class="roomlabel">HALL</div></div>
-      <div id="floor"></div>
-
-      <div class="spot" id="tv"       style="left:3%"  title="Watch telly"><span class="icon">📺</span><span class="tag">Telly</span></div>
-      <div class="spot" id="sofa"     style="left:15%" title="Have a sit down"><span class="icon">🛋️</span><span class="tag">Sofa</span></div>
-      <div class="spot" id="radiator" style="left:28%" title="Toggle the heating"><span class="icon">♨️</span><span class="tag">Heating</span></div>
-      <div class="spot" id="kettle"   style="left:42%" title="Put the kettle on"><span class="icon">🫖</span><span class="tag">Kettle</span></div>
-      <div class="spot" id="fridge"   style="left:56%" title="Meal deal"><span class="icon">🧊</span><span class="tag">Fridge</span></div>
-      <div class="spot" id="laptop"   style="left:75%" title="Work from home"><span class="icon">💻</span><span class="tag">Work</span></div>
-      <div class="spot" id="door"     style="left:89%" title="Pop out"><span class="icon">🚪</span><span class="tag">Pop out</span></div>
-
-      <div id="brit" style="left:20%">
-        <div id="bubble"></div>
-        <div id="plumbob"></div>
-        <span id="sprite">🧍</span>
-        <div id="progress"><i></i></div>
-      </div>
-    </div>
-  </div>
-
-  <aside>
-    <h2>NEEDS OF THE NATION</h2>
-    <div class="need"><label>☕ Tea <span id="v-tea"></span></label><div class="bar"><i id="b-tea"></i></div></div>
-    <div class="need"><label>🥪 Food <span id="v-hunger"></span></label><div class="bar"><i id="b-hunger"></i></div></div>
-    <div class="need"><label>🔥 Warmth <span id="v-warmth"></span></label><div class="bar"><i id="b-warmth"></i></div></div>
-    <div class="need"><label><span id="moraleFace">😐</span> Morale <span id="v-morale"></span></label><div class="bar"><i id="b-morale"></i></div></div>
-    <div id="warnings"></div>
-    <div class="info" id="costs"></div>
-    <div class="info">🎯 <b>The Dream:</b> save <b>£2,000</b> for a one-way ticket somewhere with functioning trains.</div>
-    <button id="escapeBtn">✈️ BOOK ONE-WAY FLIGHT — £1,999</button>
-  </aside>
-</main>
-
 <div id="ticker"><span class="label">BREAKING</span><span id="tickertext"></span></div>
+
+<div id="stage">
+  <canvas id="cv"></canvas>
+  <div id="toasts"></div>
+  <div id="pie"></div>
+</div>
+
+<div id="panel">
+  <div id="portrait"><div id="face">🙂</div><div id="pname">Gary, 47</div></div>
+  <div id="needsGrid">
+    <div class="need"><label>☕ TEA <span id="v-tea"></span></label><div class="bar"><i id="b-tea"></i></div></div>
+    <div class="need"><label>🥪 FOOD <span id="v-hunger"></span></label><div class="bar"><i id="b-hunger"></i></div></div>
+    <div class="need"><label>🔥 WARMTH <span id="v-warmth"></span></label><div class="bar"><i id="b-warmth"></i></div></div>
+    <div class="need"><label>🚽 BLADDER <span id="v-bladder"></span></label><div class="bar"><i id="b-bladder"></i></div></div>
+    <div class="need"><label>😴 ENERGY <span id="v-energy"></span></label><div class="bar"><i id="b-energy"></i></div></div>
+    <div class="need"><label>🎭 MORALE <span id="v-morale"></span></label><div class="bar"><i id="b-morale"></i></div></div>
+  </div>
+  <div id="infoCol">
+    <span id="money">💷 <b>£120.00</b></span><br>
+    <span id="clock">Day 1 · 08:00</span> <span id="weather">🌧️</span><br>
+    <span id="pmLine">PM #1: <b id="pmName">…</b></span>
+  </div>
+  <div id="rightCol">
+    <div id="speed">
+      <button id="sp0" title="Pause">❚❚</button>
+      <button id="sp1" class="on" title="Normal">▶</button>
+      <button id="sp2" title="Fast">▶▶</button>
+      <button id="sp3" title="Ludicrous">▶▶▶</button>
+    </div>
+    <div id="warnings"></div>
+    <button id="escapeBtn">✈️ BOOK ONE-WAY FLIGHT — £1,999</button>
+  </div>
+</div>
 
 <div id="overlay">
   <div class="card" id="overlayCard">
     <h1>BRITS<span>™</span></h1>
     <div class="sub">A life simulation of a plucky island nation, going it alone.</div>
-    <p>Keep your Brit topped up on <b>tea, food, warmth and morale</b> while the bills climb,
-       the rain falls sideways, and the Prime Ministers rotate like a kebab.</p>
-    <p>Click things in the house to use them. Choose between <b>heating and eating</b>.
-       Survive the rolling news. And if you can save <b>£2,000</b>… there's always the airport.</p>
+    <p>Keep your Brit topped up on <b>tea, food, warmth, sleep and morale</b> — and mind the
+       <b>bladder</b>, because the tea has to go somewhere. Bills climb. Rain falls sideways.
+       Prime Ministers rotate like a kebab.</p>
+    <p><b>Click objects</b> for options, click the floor to wander, use ▶▶ to fast-forward through
+       the grim bits. Choose between <b>heating and eating</b>. And if you can save <b>£2,000</b>…
+       there's always the airport.</p>
     <button id="startBtn">START LIFE 🇬🇧</button>
     <div class="small">Sunlit uplands sold separately. Terms apply. £350m/week not included.</div>
   </div>
@@ -192,11 +169,46 @@
 
 <script>
 "use strict";
-/* ================= DATA ================= */
-const PM_FIRST = ["Rt Hon Barnaby","Sir Crispin","Baroness Prue","Dame Hetty","Sir Monty","Tarquin","Bunty","Rt Hon Piers","Sir Aubrey","Mavis","Lord Rupert","Rt Hon Jolyon"];
-const PM_LAST  = ["Fudge-Whistle","Snodgrass","Chumley-Brown","Trussington","Farquhar-Smythe","Bottomley","Pigeon","Marmaduke","Crumpet","Wetherby","Gove-Adjacent","Lettuce-Botham"];
+/* ============================================================
+   BRITS™ v2 — isometric engine
+   ============================================================ */
+const TW=32, TH=16;                 // half tile width/height
+const GW=14, GH=9;                  // grid size; gy 0..5 interior, 6..8 garden
+const OX=(GH)*TW+8, OY=118;
+const WALL_H=92, LOW_H=30;
+const cv=document.getElementById("cv"), ctx=cv.getContext("2d");
+const $=id=>document.getElementById(id);
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const clamp=(v,a=0,b=100)=>Math.max(a,Math.min(b,v));
 
-const HEADLINES = [
+function iso(gx,gy){ return {x:(gx-gy)*TW+OX, y:(gx+gy)*TH+OY}; }
+function shade(hex,amt){
+  const n=parseInt(hex.slice(1),16);
+  let r=(n>>16)+amt, g=((n>>8)&255)+amt, b=(n&255)+amt;
+  return `rgb(${clamp(r,0,255)},${clamp(g,0,255)},${clamp(b,0,255)})`;
+}
+function poly(pts, fill, stroke){
+  ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);
+  for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i].x,pts[i].y);
+  ctx.closePath(); ctx.fillStyle=fill; ctx.fill();
+  if(stroke!==false){ ctx.strokeStyle="rgba(0,0,0,.16)"; ctx.lineWidth=1; ctx.stroke(); }
+}
+/* iso cuboid from grid rect (gx,gy,w,d), raised z0..z0+h */
+function box(gx,gy,w,d,h,color,z0=0){
+  const A=iso(gx,gy), B=iso(gx+w,gy), C=iso(gx+w,gy+d), D=iso(gx,gy+d);
+  const up=p=>({x:p.x, y:p.y-z0-h}), lo=p=>({x:p.x, y:p.y-z0});
+  poly([up(A),up(B),up(C),up(D)], shade(color,14));            // top
+  poly([up(D),up(C),lo(C),lo(D)], shade(color,-8));            // SW face
+  poly([up(C),up(B),lo(B),lo(C)], shade(color,-28));           // SE face
+}
+
+/* ============================================================
+   DATA — satire content
+   ============================================================ */
+const PM_FIRST=["Rt Hon Barnaby","Sir Crispin","Baroness Prue","Dame Hetty","Sir Monty","Tarquin","Bunty","Rt Hon Piers","Sir Aubrey","Mavis","Lord Rupert","Rt Hon Jolyon"];
+const PM_LAST=["Fudge-Whistle","Snodgrass","Chumley-Brown","Trussington","Farquhar-Smythe","Bottomley","Pigeon","Marmaduke","Crumpet","Wetherby","Gove-Adjacent","Lettuce-Botham"];
+const NAMES=["Gary","Barbara","Nigel","Doreen","Kev","Tracey","Colin","Pam","Terry","Sandra","Brian","Maureen"];
+const HEADLINES=[
   "Water company apologises for sewage, awards CEO record bonus",
   "Lettuce outlasts another cabinet minister",
   "Historic trade deal signed with very small island; GDP up 0.0002%",
@@ -211,290 +223,743 @@ const HEADLINES = [
   "New blue passport proudly printed in Poland",
   "Queue forms outside Greggs; nobody can remember why",
   "Sunlit uplands delayed due to leaves on the line",
-  "Exports of gravy granules 'weaponised' in EU talks",
   "Minister insists £9 meal deal 'still a deal, technically'",
   "River wins award for 'Most Improved Sewage'",
-  "UK to rejoin Eurovision voting bloc 'as a first step'",
   "Heatwave declared at 21°C; nation ceases to function",
   "White van man named interim Chancellor",
   "Fish 'happier now they're British', claims peer",
   "Study finds 94% of national mood determined by kettle",
 ];
-
-const TV_COMFORT = [
-  "Bake Off: someone's soggy bottom unites the nation. +morale",
-  "Antiques Roadshow: man learns his vase is worth a used car. Lovely.",
-  "Repair Shop makes you cry about a teddy bear again.",
+const TV_COMFORT=[
+  "Bake Off: a soggy bottom unites the nation.",
+  "Antiques Roadshow: a vase is worth a used car. Lovely.",
+  "The Repair Shop makes you cry about a teddy bear again.",
   "Snooker. Hushed voices. Gentle applause. Bliss.",
-  "Countdown: you got a seven-letter word. Genius status confirmed.",
+  "Countdown: you got a seven-letter word. Genius confirmed.",
 ];
-const TV_NEWS = [
+const TV_NEWS=[
   "BREAKING: everything slightly worse than yesterday.",
-  "News: the pound dipped after the Chancellor sneezed.",
-  "Panel show argues about fish quotas for 40 minutes.",
+  "The pound dipped after the Chancellor sneezed.",
+  "A panel argues about fish quotas for 40 minutes.",
   "Correspondent stands in rain to confirm it is raining.",
 ];
-const OUTINGS = [
-  {w:3, run:()=>{ S.queues++; bump({morale:+12}); toast("A QUEUE","Forty minutes. You didn't need anything. Magnificent queue though — one of the greats.","good"); }},
-  {w:3, run:()=>{ const p=S.pintPrice.toFixed(2); S.money-=S.pintPrice; S.pintPrice+=0.10; bump({morale:+18, warmth:+8}); toast("THE PUB",`A pint is now £${p}. You drink it in protest. Then have another, also in protest.`,"good"); }},
-  {w:3, run:()=>{ bump({warmth:-18, morale:-5}); toast("WEATHER","The heavens open the moment you step out. No coat, obviously. Classic.","bad"); }},
-  {w:2, run:()=>{ S.money-=3; bump({hunger:+18, morale:+7}); toast("YELLOW STICKERS","Reduced-section triumph: 4 crumpets, a mystery quiche, and dignity, all for £3.","good"); }},
-  {w:3, run:()=>{ bump({morale:+9}); toast("SMALL TALK","Discussed the weather with a neighbour for 25 minutes. Verdict, jointly reached: 'mad, isn't it'.","good"); }},
-  {w:1, run:()=>{ S.money-=12; bump({morale:-6}); toast("POTHOLE","A pothole the size of a paddling pool eats your tyre. The council thanks you for your feedback.","bad"); }},
-];
 
-const EVENTS = [
-  {w:3, run:()=>{ S.pmCount++; S.pmName = pick(PM_FIRST)+" "+pick(PM_LAST); bump({morale:+5});
-      toast("NEW PRIME MINISTER",`${S.pmName} enters No.10 promising 'stability'. You feel a flicker of hope. It passes.`,""); }},
-  {w:2, run:()=>{ S.bills=Math.round(S.bills*1.18); bump({morale:-8});
-      toast("ENERGY PRICE CAP",`The cap rises again "to protect consumers". Bills now £${S.bills}/day. The radiator watches you smugly.`,"bad"); }},
-  {w:2, run:()=>{ bump({morale:-6}); toast("TRAIN STRIKE","All trains cancelled. You weren't going anywhere, but it's the principle of the thing.","bad"); }},
-  {w:1, run:()=>{ setWeather("sun"); bump({morale:+25});
-      toast("SUNNY SPELL","20°C. The nation loses its mind. Every barbecue in a 3-mile radius ignites simultaneously.","good"); }},
-  {w:2, run:()=>{ S.mealPrice+=0.60; bump({morale:-4});
-      toast("SHRINKFLATION",`Your favourite crisps: same bag, six crisps. Meal deal now £${S.mealPrice.toFixed(2)}. "A deal," insists the shop.`,"bad"); }},
-  {w:2, run:()=>{ S.queues++; bump({morale:+12}); toast("MYSTERY QUEUE","A queue has formed on the high street. Nobody knows what for. You join it immediately. Wonderful.","good"); }},
-  {w:2, run:()=>{ bump({morale:-8}); toast("SEWAGE ALERT","The local river has been reclassified as 'chunky'. Swimming discouraged; wading unthinkable.","bad"); }},
-  {w:1, run:()=>{ bump({morale:-6}); toast("BIN DAY","The bin day changed without warning. Yours was the only bin not out. The street knows. The street remembers.","bad"); }},
-  {w:1, run:()=>{ bump({morale:+8}); toast("ROYAL OCCASION","Someone royal waved from a car. Bunting deployed within minutes. Street party in light drizzle. Perfect.","good"); }},
-  {w:1, run:()=>{ S.bills+=4; bump({morale:-5}); toast("INTEREST RATES","Rates rise again. You don't fully understand it, but everyone on telly looks worried, so you are too.","bad"); }},
-  {w:1, run:()=>{ bump({morale:+6}); toast("THE LETTUCE","A supermarket lettuce has now outlasted three ministers and a regional airline. It gives a press conference.","good"); }},
-];
-
-/* ================= STATE ================= */
-const DAY_LEN = 45;            // seconds per day
+/* ============================================================
+   STATE
+   ============================================================ */
 let S;
 function freshState(){
   return {
-    running:false, over:false, busy:false,
-    day:1, dayT:0, evT:12,
-    pmCount:1, pmName:"Rt Hon Barnaby Fudge-Whistle",
+    running:false, over:false, speed:1, lastSpeed:1,
+    day:1, hour:8, evT:14,
+    pmCount:1, pmName:pick(PM_FIRST)+" "+pick(PM_LAST),
+    name:pick(NAMES), age:29+Math.floor(Math.random()*35),
     money:120, bills:42, mealPrice:5.49, pintPrice:7.20,
-    teas:0, queues:0,
+    teas:0, queues:0, accidents:0,
     heating:false, weather:"rain",
-    needs:{tea:70, hunger:70, warmth:65, morale:60},
+    irishApplied:0, irishPassport:false,
+    needs:{tea:70,hunger:70,warmth:65,bladder:25,energy:80,morale:60},
   };
 }
+/* character */
+const C={ gx:8, gy:4, x:8, y:4, path:[], moving:false, dir:1, phase:0,
+          busy:false, act:null, pending:null, hidden:false, sitAt:null,
+          jumper:"#b8422f", skin:"#e8b48c", hair:"#5a3a22" };
 
-/* ================= HELPERS ================= */
-const $ = id => document.getElementById(id);
-const pick = a => a[Math.floor(Math.random()*a.length)];
-function pickW(list){
-  const tot = list.reduce((s,e)=>s+e.w,0);
-  let r = Math.random()*tot;
-  for(const e of list){ if((r-=e.w)<0) return e; }
-  return list[0];
-}
-function clamp(v){ return Math.max(0, Math.min(100, v)); }
-function bump(d){ for(const k in d) S.needs[k]=clamp(S.needs[k]+d[k]); }
+/* ============================================================
+   WORLD — walls, rooms, furniture
+   ============================================================ */
+/* wall segs: {t:'ns'|'ew', gx, gy, h, c} — ns = west edge of (gx,gy); ew = north edge of (gx,gy) */
+const walls=[];
+for(let x=0;x<GW;x++) walls.push({t:'ew',gx:x,gy:0,h:WALL_H,c:'#e6dcc2'});          // back
+for(let y=0;y<6;y++)  walls.push({t:'ns',gx:0,gy:y,h:WALL_H,c:'#ded2b4'});          // west
+for(const dx of [4,6,10]) for(let y=0;y<6;y++) if(y!==4)
+  walls.push({t:'ns',gx:dx,gy:y,h:LOW_H,c:'#e6dcc2'});                              // dividers (door gap gy=4)
+for(let x=0;x<GW;x++) if(x!==7) walls.push({t:'ew',gx:x,gy:6,h:LOW_H,c:'#e6dcc2'}); // front (door gap gx=7)
+for(let y=0;y<6;y++)  walls.push({t:'ns',gx:GW,gy:y,h:LOW_H,c:'#ded2b4'});          // east
+for(let y=6;y<GH;y++){ walls.push({t:'ns',gx:0,gy:y,h:14,c:'#f2f2ee'}); walls.push({t:'ns',gx:GW,gy:y,h:14,c:'#f2f2ee'}); }
+for(let x=0;x<GW;x++) if(x!==7) walls.push({t:'ew',gx:x,gy:GH,h:14,c:'#f2f2ee'});   // garden fence
 
-function toast(title, msg, cls){
-  const t = document.createElement("div");
-  t.className = "toast "+(cls||"");
-  t.innerHTML = "<b>"+title+"</b>"+msg;
-  $("toasts").appendChild(t);
-  setTimeout(()=>{ t.style.opacity=0; t.style.transition="opacity .5s"; setTimeout(()=>t.remove(),500); }, 5200);
-  while($("toasts").children.length>4) $("toasts").firstChild.remove();
+function roomAt(gx,gy){
+  if(gy>=6) return 'garden';
+  if(gx<4) return 'bed'; if(gx<6) return 'bath'; if(gx<10) return 'lounge'; return 'kitchen';
 }
-
-/* ================= WEATHER ================= */
-function setWeather(w){
-  S.weather = w;
-  const labels = {rain:"🌧️ Rain", drizzle:"🌦️ Drizzle", overcast:"☁️ Overcast", sun:"☀️ SUN?!"};
-  $("weather").textContent = labels[w];
-  $("sun").style.display = w==="sun" ? "block" : "none";
-  document.querySelectorAll(".drop").forEach(d=>d.remove());
-  if(w==="rain"||w==="drizzle"){
-    const n = w==="rain" ? 70 : 25;
-    for(let i=0;i<n;i++){
-      const d=document.createElement("div"); d.className="drop";
-      d.style.left = Math.random()*100+"vw";
-      d.style.animationDuration = (0.6+Math.random()*0.7)+"s";
-      d.style.animationDelay = Math.random()*2+"s";
-      $("world").appendChild(d);
-    }
-  }
-}
-function rollWeather(){
-  const r=Math.random();
-  setWeather(r<0.55 ? "rain" : r<0.75 ? "drizzle" : r<0.95 ? "overcast" : "sun");
-}
-
-/* ================= CHARACTER / ACTIONS ================= */
-function walkTo(pct, then){
-  const brit=$("brit"), from=parseFloat(brit.style.left), dist=Math.abs(pct-from);
-  const dur=Math.max(0.25, dist/28);          // ~28% of house per second
-  $("sprite").textContent="🚶";
-  brit.style.transition=`left ${dur}s linear`;
-  brit.style.left=pct+"%";
-  setTimeout(()=>{ $("sprite").textContent="🧍"; then(); }, dur*1000);
-}
-function doAction(spotPct, label, seconds, done){
-  if(S.busy || S.over || !S.running) return;
-  S.busy=true;
-  walkTo(spotPct, ()=>{
-    if(S.over){S.busy=false; return;}
-    const bub=$("bubble"); bub.textContent=label; bub.style.display="block";
-    const bar=$("progress"), fill=bar.firstElementChild;
-    bar.style.visibility="visible"; fill.style.transition="none"; fill.style.width="0";
-    requestAnimationFrame(()=>{ fill.style.transition=`width ${seconds}s linear`; fill.style.width="100%"; });
-    setTimeout(()=>{
-      bub.style.display="none"; bar.style.visibility="hidden"; fill.style.width="0";
-      S.busy=false; if(!S.over) done();
-    }, seconds*1000);
-  });
-}
-
-const ACTIONS = {
-  kettle: ()=>doAction(42,"Putting the kettle on…",2.5,()=>{
-    S.teas++; bump({tea:+45, morale:+8});
-    if(Math.random()<0.12) toast("KETTLE","Half-time. Every kettle in Britain switches on at once. The National Grid holds. Just.","good");
-    else if(Math.random()<0.15){ bump({morale:+4}); toast("KETTLE","Milk's off. Emergency UHT deployed. It's fine. Everything is fine.",""); }
-  }),
-  fridge: ()=>doAction(56,"Assembling a meal deal…",2,()=>{
-    S.money-=S.mealPrice; bump({hunger:+40, morale:+3});
-    toast("MEAL DEAL",`Sandwich, snack, drink: £${S.mealPrice.toFixed(2)}. The sandwich is 60% air. The air is British.`,"");
-  }),
-  radiator: ()=>doAction(28, S.heating?"Turning heating off…":"Turning heating on…",1,()=>{
-    S.heating=!S.heating;
-    document.body.classList.toggle("heat-on", S.heating);
-    toast("HEATING", S.heating
-      ? "Radiator on. You can almost hear the smart meter laughing."
-      : "Heating off. Time for the traditional Big Coat Indoors.", S.heating?"":"bad");
-  }),
-  tv: ()=>doAction(3,"Watching telly…",4,()=>{
-    if(Math.random()<0.6){ bump({morale:+14}); toast("TELLY",pick(TV_COMFORT),"good"); }
-    else { bump({morale:-10}); toast("THE NEWS",pick(TV_NEWS),"bad"); }
-  }),
-  sofa: ()=>doAction(15,"Having a little sit down…",5,()=>{
-    bump({morale:+10, warmth:+6});
-    toast("SOFA","A little sit down. Not a nap — you were just resting your eyes.","good");
-  }),
-  laptop: ()=>doAction(75,"Logging on… (3 Teams calls)",6,()=>{
-    let wage=115;
-    if(Math.random()<0.15){ wage=80; toast("PAYSLIP","Wages docked: 'administrative recalibration levy'. No further details available.","bad"); }
-    S.money+=wage; bump({tea:-15, morale:-6});
-    toast("WORK",`A hard day's WFH. £${wage} earned. Someone said "let's take this offline" while already online.`,"");
-  }),
-  door: ()=>doAction(89,"Popping out…",5,()=>pickW(OUTINGS).run()),
+const FLOORS={
+  bed:    (x,y)=> (x+y)%2 ? '#8496ad':'#7d92ab',
+  bath:   (x,y)=> (x+y)%2 ? '#cfe0e4':'#b8ced4',
+  lounge: (x,y)=> (x+y)%2 ? '#95a672':'#8fa06a',
+  kitchen:(x,y)=> (x+y)%2 ? '#d9c9a3':'#c9b78d',
+  garden: (x,y)=> x===7 ? '#b6ad9c' : ((x+y)%2 ? '#6da34d':'#639947'),
 };
 
-/* ================= GAME LOOP ================= */
-let loop=null;
-function tick(){
-  const dt=0.2;
-  // decay
-  S.needs.tea    = clamp(S.needs.tea    - 1.05*dt);
-  S.needs.hunger = clamp(S.needs.hunger - 0.55*dt);
-  const cold = S.weather==="rain" ? 1.0 : S.weather==="sun" ? 0.35 : 0.7;
-  S.needs.warmth = clamp(S.needs.warmth + (S.heating ? +2.2 : -cold)*dt);
-  let mDecay = 0.32;
-  if(S.needs.tea<15)    mDecay+=0.55;   // a Brit without tea is a hazard
-  if(S.needs.hunger<15) mDecay+=0.5;
-  if(S.needs.warmth<15) mDecay+=0.6;
-  S.needs.morale = clamp(S.needs.morale - mDecay*dt);
-  if(S.heating) S.money -= 0.16*dt*5;   // £0.16/s — the meter spins like a fruit machine
+/* ---- furniture drawing ---- */
+function drawBed(){
+  box(0,0,2,2,12,'#7a5636');                       // frame
+  box(0.06,0.06,1.88,1.88,8,'#e9e4d8',12);         // mattress
+  box(0.06,0.75,1.88,1.19,9,'#a33434',13);         // duvet
+  box(0.18,0.14,0.72,0.5,6,'#ffffff',20);          // pillows
+  box(1.05,0.14,0.72,0.5,6,'#ffffff',20);
+}
+function drawWardrobe(){ box(3,0,1,0.85,58,'#8a6642'); const p=iso(3.5,0.85); ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.beginPath(); ctx.moveTo(p.x,p.y-56); ctx.lineTo(p.x,p.y-8); ctx.stroke(); }
+function drawDesk(){
+  box(0,3,1,2,20,'#9c7448');
+  box(0.15,3.7,0.7,0.55,2,'#3a3a3a',20);           // laptop base
+  box(0.15,3.62,0.7,0.1,13,'#2c2c34',22);          // laptop screen
+}
+function drawToilet(){
+  box(5.25,0,0.55,0.35,26,'#eef0ee');              // cistern
+  box(5.2,0.3,0.65,0.55,13,'#f4f6f4');             // bowl
+  const p=iso(5.53,0.58); ctx.fillStyle='#cfd8d8'; ctx.beginPath();
+  ctx.ellipse(p.x,p.y-14,10,5.5,0,0,7); ctx.fill();
+}
+function drawBath(){
+  box(4.05,0.05,0.9,1.9,17,'#f4f6f4');
+  const a=iso(4.2,0.3), b=iso(4.85,0.3), c=iso(4.85,1.8), d=iso(4.2,1.8);
+  poly([{x:a.x,y:a.y-17},{x:b.x,y:b.y-17},{x:c.x,y:c.y-17},{x:d.x,y:d.y-17}],'#9fd4e8',false);
+  const t=iso(4.5,0.18); ctx.fillStyle='#c9cdd1'; ctx.fillRect(t.x-2,t.y-26,4,9);
+}
+function drawTV(){
+  box(7.2,0.05,1.6,0.5,12,'#6b4d30');              // cabinet
+  box(7.3,0.12,1.4,0.22,30,'#23232b',12);          // set
+  // screen face (SW)
+  const a=iso(7.34,0.36), b=iso(8.66,0.36);
+  const on = C.act && C.act.id==='tv';
+  poly([{x:a.x,y:a.y-39},{x:b.x,y:b.y-39},{x:b.x,y:b.y-15},{x:a.x,y:a.y-15}], on?'#bfe3ff':'#101018', false);
+  if(on){ ctx.fillStyle='#ff8fb0'; ctx.fillRect((a.x+b.x)/2-6,a.y-33,12,8); }
+}
+function drawSofa(){
+  box(7,3.1,2,0.85,13,'#3f6c8e');                  // seat
+  box(7,3.0,2,0.28,30,'#35597a');                  // back
+  box(6.92,3.0,0.22,0.95,22,'#35597a');            // arms
+  box(8.86,3.0,0.22,0.95,22,'#35597a');
+  box(7.15,3.15,0.75,0.6,5,'#4d7fa5',13);          // cushions
+  box(8.1,3.15,0.75,0.6,5,'#4d7fa5',13);
+}
+function drawRadiator(){
+  box(9.15,0.02,0.75,0.16,22,S.heating?'#f3f3f3':'#e8e8e8',4);
+  const a=iso(9.2,0.18), b=iso(9.85,0.18);
+  ctx.strokeStyle='rgba(0,0,0,.18)';
+  for(let i=1;i<6;i++){ const x=a.x+(b.x-a.x)*i/6, y=a.y+(b.y-a.y)*i/6; ctx.beginPath(); ctx.moveTo(x,y-24); ctx.lineTo(x,y-6); ctx.stroke(); }
+  if(S.heating){ const g=iso(9.5,0.3); ctx.fillStyle='rgba(255,120,20,.22)'; ctx.beginPath(); ctx.ellipse(g.x,g.y-16,26,16,0,0,7); ctx.fill(); }
+}
+function drawShelf(){
+  box(6.05,0.02,0.9,0.3,48,'#8a6642');
+  const spines=['#a33','#369','#b82','#575','#93b'];
+  const a=iso(6.15,0.32), b=iso(6.85,0.32);
+  for(let i=0;i<5;i++){ const x=a.x+(b.x-a.x)*i/5, y=a.y+(b.y-a.y)*i/5;
+    ctx.fillStyle=spines[i]; ctx.fillRect(x+1,y-42+((i%2)*2),4,12); ctx.fillRect(x+1,y-26+((i+1)%2)*2,4,12); }
+}
+function drawCounter(){
+  box(10,0,2,0.8,24,'#b9895a');
+  box(10.55,0.18,0.5,0.42,11,'#c2342a',24);        // kettle body
+  box(10.62,0.22,0.36,0.3,3,'#2c2c2c',35);         // lid
+  const s=iso(10.6,0.4); ctx.strokeStyle='#c2342a'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(s.x-6,s.y-30); ctx.quadraticCurveTo(s.x-13,s.y-33,s.x-11,s.y-40); ctx.stroke(); ctx.lineWidth=1;
+}
+function drawSink(){
+  box(12,0,1,0.8,24,'#b9895a');
+  const a=iso(12.2,0.15), c=iso(12.8,0.6);
+  poly([{x:a.x,y:a.y-23},{x:iso(12.8,0.15).x,y:iso(12.8,0.15).y-23},{x:c.x,y:c.y-23},{x:iso(12.2,0.6).x,y:iso(12.2,0.6).y-23}],'#9fb2b8',false);
+  const t=iso(12.5,0.12); ctx.fillStyle='#c9cdd1'; ctx.fillRect(t.x-2,t.y-34,4,11);
+}
+function drawFridge(){
+  box(13,0,0.95,0.85,54,'#dfe3e6');
+  const a=iso(13.1,0.85); ctx.strokeStyle='rgba(0,0,0,.25)';
+  ctx.beginPath(); ctx.moveTo(a.x+3,a.y-48); ctx.lineTo(a.x+3,a.y-30); ctx.stroke();
+  ctx.fillStyle='#c33'; ctx.fillRect(a.x+8,a.y-44,4,4); ctx.fillStyle='#36c'; ctx.fillRect(a.x+14,a.y-40,4,4);
+}
+function drawTable(){ box(10.9,3,1.6,0.9,20,'#9c7448'); box(11.15,3.2,0.5,0.5,2,'#e8e2d2',20); }
+function drawDoor(){
+  const a=iso(7,6), b=iso(8,6);
+  poly([{x:a.x,y:a.y-52},{x:b.x,y:b.y-52},{x:b.x,y:b.y},{x:a.x,y:a.y}],'#a3242a',false);
+  ctx.fillStyle='#e8c96a'; ctx.beginPath(); ctx.arc((a.x+b.x)/2+8,(a.y+b.y)/2-24,2.5,0,7); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.75)'; ctx.fillRect((a.x+b.x)/2-8,a.y-46+(b.y-a.y)/2,14,8);
+}
+function drawGnome(){
+  const p=iso(10.5,7.5);
+  ctx.fillStyle='#3a63b0'; ctx.beginPath(); ctx.ellipse(p.x,p.y-8,5,7,0,0,7); ctx.fill();
+  ctx.fillStyle=C.skin; ctx.beginPath(); ctx.arc(p.x,p.y-17,4,0,7); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.ellipse(p.x,p.y-13,4,3,0,0,7); ctx.fill();
+  ctx.fillStyle='#c2342a'; ctx.beginPath(); ctx.moveTo(p.x-4,p.y-19); ctx.lineTo(p.x+4,p.y-19); ctx.lineTo(p.x,p.y-30); ctx.closePath(); ctx.fill();
+}
+function drawBins(){
+  box(2.05,6.1,0.42,0.42,20,'#3d5c3a'); box(2.0,6.05,0.52,0.52,4,'#2c4229',20);
+  box(2.55,6.1,0.42,0.42,20,'#4a3a5c'); box(2.5,6.05,0.52,0.52,4,'#39294a',20);
+}
 
-  // day
-  S.dayT+=dt;
-  if(S.dayT>=DAY_LEN){
-    S.dayT=0; S.day++;
-    S.money-=S.bills;
-    S.mealPrice*=1.012;
-    rollWeather();
-    toast("NEW DAY",`Day ${S.day}. Bills paid: £${S.bills}. The meal deal quietly rises to £${S.mealPrice.toFixed(2)}. Nobody voted for this specifically.`, "");
+/* ---- furniture registry ---- */
+const FURN=[
+  {id:'bed',    name:'BED',        tiles:[[0,0],[1,0],[0,1],[1,1]], use:[2,1], draw:drawBed},
+  {id:'wardrobe',name:'WARDROBE',  tiles:[[3,0]], use:[3,1], draw:drawWardrobe},
+  {id:'desk',   name:'LAPTOP',     tiles:[[0,3],[0,4]], use:[1,3], draw:drawDesk},
+  {id:'toilet', name:'THE LOO',    tiles:[[5,0]], use:[5,1], draw:drawToilet},
+  {id:'bath',   name:'BATH',       tiles:[[4,0],[4,1]], use:[4,2], draw:drawBath},
+  {id:'tv',     name:'TELLY',      tiles:[[7,0],[8,0]], use:[8,1], draw:drawTV},
+  {id:'sofa',   name:'SOFA',       tiles:[[7,3],[8,3]], use:[7,2], draw:drawSofa},
+  {id:'radiator',name:'HEATING',   tiles:[[9,0]], use:[9,1], draw:drawRadiator},
+  {id:'shelf',  name:'BOOKSHELF',  tiles:[[6,0]], use:[6,1], draw:drawShelf},
+  {id:'counter',name:'KETTLE',     tiles:[[10,0],[11,0]], use:[10,1], draw:drawCounter},
+  {id:'sink',   name:'SINK',       tiles:[[12,0]], use:[12,1], draw:drawSink},
+  {id:'fridge', name:'FRIDGE',     tiles:[[13,0]], use:[13,1], draw:drawFridge},
+  {id:'table',  name:'TABLE',      tiles:[[11,3],[12,3]], use:[12,2], draw:drawTable},
+  {id:'door',   name:'FRONT DOOR', tiles:[], use:[7,6], draw:drawDoor, anchor:7+6, bbox:'door'},
+  {id:'gnome',  name:'GNOME',      tiles:[[10,7]], use:[9,7], draw:drawGnome},
+  {id:'bins',   name:'THE BINS',   tiles:[[2,6]], use:[3,6], draw:drawBins},
+];
+for(const f of FURN){
+  if(f.anchor===undefined) f.anchor=Math.max(...f.tiles.map(t=>t[0]+t[1]))+0.3;
+  // hitbox from tiles (or door special)
+  const tl=f.bbox==='door'?[[7,5.4],[7.9,5.4]]:f.tiles;
+  let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
+  for(const [tx,ty] of tl){ for(const [cx,cy] of [[tx,ty],[tx+1,ty],[tx+1,ty+1],[tx,ty+1]]){
+    const p=iso(cx,cy); x0=Math.min(x0,p.x); x1=Math.max(x1,p.x); y0=Math.min(y0,p.y); y1=Math.max(y1,p.y); }}
+  f.hb={x0:x0-4, x1:x1+4, y0:y0-64, y1:y1+4};
+}
+const blocked=new Set();
+for(const f of FURN) for(const [tx,ty] of f.tiles) blocked.add(tx+","+ty);
+const edgeBlock=new Set();
+for(const w of walls){ if(w.h>=LOW_H||w.h===14) edgeBlock.add(w.t+w.gx+","+w.gy); }
+
+/* ============================================================
+   PATHFINDING (BFS)
+   ============================================================ */
+function canStep(x,y,nx,ny){
+  if(nx<0||ny<0||nx>=GW||ny>=GH) return false;
+  if(blocked.has(nx+","+ny)) return false;
+  if(nx>x) { if(edgeBlock.has('ns'+nx+","+y)) return false; }
+  if(nx<x) { if(edgeBlock.has('ns'+x+","+y)) return false; }
+  if(ny>y) { if(edgeBlock.has('ew'+x+","+ny)) return false; }
+  if(ny<y) { if(edgeBlock.has('ew'+x+","+y)) return false; }
+  return true;
+}
+function findPath(sx,sy,tx,ty){
+  if(sx===tx&&sy===ty) return [];
+  const q=[[sx,sy]], prev={}, seen=new Set([sx+","+sy]);
+  while(q.length){
+    const [x,y]=q.shift();
+    for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+      const nx=x+dx, ny=y+dy, k=nx+","+ny;
+      if(seen.has(k)||!canStep(x,y,nx,ny)) continue;
+      seen.add(k); prev[k]=x+","+y;
+      if(nx===tx&&ny===ty){
+        const path=[[nx,ny]]; let cur=k;
+        while(prev[cur]!==sx+","+sy){ cur=prev[cur]; const [px,py]=cur.split(",").map(Number); path.unshift([px,py]); }
+        return path;
+      }
+      q.push([nx,ny]);
+    }
+  }
+  return null;
+}
+
+/* ============================================================
+   ACTIONS & MENUS
+   ============================================================ */
+function bump(d){ for(const k in d) S.needs[k]=clamp(S.needs[k]+d[k]); }
+function toast(title,msg,cls){
+  const t=document.createElement("div"); t.className="toast "+(cls||"");
+  t.innerHTML="<b>"+title+"</b>"+msg; $("toasts").appendChild(t);
+  setTimeout(()=>{t.style.opacity=0; t.style.transition="opacity .5s"; setTimeout(()=>t.remove(),500);},5600);
+  while($("toasts").children.length>4) $("toasts").firstChild.remove();
+}
+function floatText(gx,gy,txt,col){ particles.push({type:'txt',txt,col,x:iso(gx+0.5,gy+0.5).x,y:iso(gx+0.5,gy+0.5).y-60,vy:-14,life:1.6}); }
+function drinkTea(n){ S.teas+=n; bump({tea:+45*n, morale:+8, bladder:+14*n}); }
+
+const MENUS={
+  counter:[
+    {label:"☕ Put the kettle on", dur:2.5, verb:"Putting the kettle on…", steam:true, fn(){ drinkTea(1);
+      if(Math.random()<0.12) toast("KETTLE","Half-time. Every kettle in Britain switches on at once. The National Grid holds. Just.","good");
+      else if(Math.random()<0.15){ bump({morale:+4}); toast("KETTLE","Milk's off. Emergency UHT deployed. It's fine. Everything is fine.",""); } }},
+    {label:"🫖 Brew a proper pot (x2)", dur:5, verb:"Warming the pot like nan taught you…", steam:true, fn(){ drinkTea(2);
+      toast("PROPER POT","Loose leaf. Warmed pot. Milk in LAST. Nan would be proud. Your bladder files an objection.","good"); }},
+  ],
+  fridge:[
+    {label:"🥪 Meal deal (£)", dur:2, verb:"Assembling a meal deal…", fn(){ S.money-=S.mealPrice; bump({hunger:+40,morale:+3});
+      floatText(13,1,"-£"+S.mealPrice.toFixed(2),"#ff9a9a");
+      toast("MEAL DEAL",`Sandwich, snack, drink: £${S.mealPrice.toFixed(2)}. The sandwich is 60% air. The air is British.`,""); }},
+    {label:"🫘 Beans on toast (£1.40)", dur:3, verb:"Beans. Toast. Civilisation…", fn(){ S.money-=1.40; bump({hunger:+26,morale:+5,warmth:+4});
+      toast("BEANS ON TOAST","The dish that built an empire and then couldn't afford the empire. Restorative.","good"); }},
+  ],
+  radiator:[
+    {label:"♨️ Toggle heating", dur:1, verb:"Negotiating with the thermostat…", fn(){ S.heating=!S.heating;
+      toast("HEATING", S.heating?"Radiator on. You can almost hear the smart meter laughing.":"Heating off. Time for the traditional Big Coat Indoors.", S.heating?"":"bad"); }},
+  ],
+  tv:[
+    {label:"🧁 Watch Bake Off", dur:4, verb:"Watching the telly…", fn(){ bump({morale:+14,energy:-3}); toast("TELLY",pick(TV_COMFORT),"good"); }},
+    {label:"📰 Watch the News", dur:4, verb:"Watching the news… why…", fn(){ bump({morale:-10}); toast("THE NEWS",pick(TV_NEWS),"bad"); }},
+  ],
+  sofa:[
+    {label:"🛋️ Have a sit down", dur:5, verb:"Having a little sit down…", sit:true, fn(){ bump({morale:+10,warmth:+5,energy:+6});
+      toast("SOFA","A little sit down. Not a nap — you were just resting your eyes.","good"); }},
+  ],
+  bed:[
+    {label:"😴 Sleep", dur:9, verb:"Zzzzz…", hide:true, zzz:true, fn(){ bump({energy:+100,morale:+6,tea:-10});
+      toast("SLEEP","Eight hours dreaming of a functioning rail network. Bliss.","good"); }},
+    {label:"🛏️ Make the bed", dur:2, verb:"Hospital corners…", fn(){ bump({morale:+4}); toast("BED MADE","Hospital corners. If the day achieves nothing else, this happened.","good"); }},
+  ],
+  toilet:[
+    {label:"🚽 Use the loo", dur:2.5, verb:"Engaged…", fn(){ bump({bladder:-90,morale:+3}); }},
+  ],
+  bath:[
+    {label:"🛁 Hot bath (£2)", dur:6, verb:"Immersion therapy…", hide:true, steam:true, fn(){ S.money-=2; bump({warmth:+40,morale:+12,energy:+5});
+      toast("BATH","Forty minutes in hot water, thinking about nothing and also everything. £2 well spent.","good"); }},
+  ],
+  desk:[
+    {label:"💻 WFH shift (+£)", dur:6, verb:"Logging on… (3 Teams calls)", fn(){
+      let wage=115;
+      if(Math.random()<0.15){ wage=80; toast("PAYSLIP","Wages docked: 'administrative recalibration levy'. No further details available.","bad"); }
+      S.money+=wage; bump({tea:-15,morale:-6,energy:-10}); floatText(0,3,"+£"+wage,"#8fe89a");
+      toast("WORK",`A hard day's WFH. £${wage} earned. Someone said "let's take this offline" while already online.`,""); }},
+    {label:"🇮🇪 Apply for Irish passport (£90)", dur:4, verb:"Ringing your nan's cousin in Sligo…", fn(){
+      if(S.irishPassport){ toast("PASSPORT","You're already European again. Stop showing off.",""); return; }
+      if(S.irishApplied){ toast("PASSPORT","Application already in. These things take time. Everything takes time.",""); return; }
+      S.money-=90; S.irishApplied=S.day;
+      toast("PASSPORT OFFICE","Application submitted via a granny in County Sligo. Processing time: 'a while'.",""); }},
+    {label:"🏦 Check banking app", dur:2, verb:"Face ID… declined… trying again…", fn(){ bump({morale:-5});
+      toast("BANKING APP",`Balance: ${S.money<0?"−£"+Math.abs(S.money).toFixed(2):"£"+S.money.toFixed(2)}. The app suggests "cutting back on small luxuries". The app means tea. The app can get in the sea.`,"bad"); }},
+  ],
+  wardrobe:[
+    {label:"🧥 Put on the good jumper", dur:2, verb:"Wrestling the jumper…", fn(){ bump({morale:+5,warmth:+8});
+      toast("THE GOOD JUMPER","You put on the other jumper. The good one. Today is now an occasion.","good"); }},
+  ],
+  shelf:[
+    {label:"📖 Read three pages", dur:4, verb:"Reading… re-reading the same line…", fn(){ bump({morale:+7,energy:+4});
+      toast("READING","Three pages of the novel everyone lied about finishing. You feel cleverer. You are not.","good"); }},
+  ],
+  sink:[
+    {label:"🧽 Do the washing up", dur:3, verb:"Marigolds on…", fn(){ bump({morale:+5});
+      toast("WASHING UP","Strangely therapeutic. You stare into the garden and think about the war. You weren't in the war.","good"); }},
+  ],
+  table:[
+    {label:"🍽️ Sit at the table like it's Christmas", dur:3, verb:"Formal dining…", fn(){ bump({morale:+6});
+      toast("THE TABLE","You eat at the table instead of the sofa. You feel like royalty. The gravy boat stays in the cupboard. It's not THAT special.","good"); }},
+  ],
+  gnome:[
+    {label:"🧙 Regard the gnome", dur:2, verb:"Regarding…", fn(){ bump({morale:+4});
+      toast("GNOME","You regard the gnome. The gnome regards you. An understanding is reached. Neither of you will speak of it.","good"); }},
+  ],
+  bins:[
+    {label:"🗑️ Put the bins out (gamble)", dur:3, verb:"Wheeling with intent…", fn(){
+      if(Math.random()<0.5){ bump({morale:+10}); toast("BIN DAY","Yours was the FIRST bin out. The street saw. Status: legend.","good"); }
+      else { bump({morale:-8}); toast("BIN DAY","Wrong week. Purple lid. Everyone saw. The shame will outlive you.","bad"); } }},
+  ],
+  door:[
+    {label:"🛍️ Pop to the shops", dur:6, verb:"Popping out…", hide:true, fn(){
+      const r=Math.random();
+      if(r<0.34){ S.money-=3; bump({hunger:+18,morale:+7}); toast("YELLOW STICKERS","Reduced-section triumph: 4 crumpets, a mystery quiche, and dignity, all for £3.","good"); }
+      else if(r<0.67){ bump({warmth:-18,morale:-5}); toast("WEATHER","The heavens open the moment you step out. No coat, obviously. Classic.","bad"); }
+      else { bump({morale:+9}); toast("SMALL TALK","Discussed the weather with a neighbour for 25 minutes. Verdict, jointly reached: 'mad, isn't it'.","good"); } }},
+    {label:"🍺 Down the pub (£)", dur:7, verb:"Just the one…", hide:true, fn(){
+      const p=S.pintPrice.toFixed(2); S.money-=S.pintPrice; S.pintPrice+=0.10; bump({morale:+18,warmth:+8,bladder:+20});
+      toast("THE PUB",`A pint is now £${p}. You drink it in protest. Then have another, also in protest.`,"good"); }},
+    {label:"🚶 Join a queue (any queue)", dur:6, verb:"Queueing beautifully…", hide:true, fn(){
+      S.queues++; bump({morale:+12}); toast("A QUEUE","Forty minutes. You didn't need anything. Magnificent queue though — one of the greats.","good"); }},
+  ],
+};
+function openMenu(f, sx, sy){
+  const pie=$("pie"); pie.innerHTML="";
+  const t=document.createElement("div"); t.className="pietitle"; t.textContent=f.name; pie.appendChild(t);
+  for(const opt of MENUS[f.id]||[]){
+    const b=document.createElement("button"); b.textContent=opt.label;
+    b.onclick=e=>{ e.stopPropagation(); closeMenu(); startAction(f,opt); };
+    pie.appendChild(b);
+  }
+  pie.style.left=sx+"px"; pie.style.top=sy+"px"; pie.style.display="flex";
+}
+function closeMenu(){ $("pie").style.display="none"; }
+
+function walkTo(tx,ty,then){
+  const path=findPath(C.gx,C.gy,tx,ty);
+  if(path===null){ toast("HMM","Can't get there. Something British is in the way.","bad"); return; }
+  closeMenu();
+  if(!path.length){ if(then) then(); return; }
+  C.path=path; C.pending=then||null;
+}
+function startAction(f,opt){
+  if(C.busy||S.over) return;
+  walkTo(f.use[0],f.use[1],()=>begin(f,opt));
+}
+function begin(f,opt){
+  C.busy=true;
+  C.act={id:f.id, f, opt, label:opt.verb, dur:opt.dur, t:0,
+         hide:!!opt.hide, sit:!!opt.sit, steam:!!opt.steam, zzz:!!opt.zzz};
+  if(opt.hide) C.hidden=true;
+  if(opt.sit) C.sitAt=f;
+}
+function finishAction(){
+  const a=C.act; C.act=null; C.busy=false; C.hidden=false; C.sitAt=null;
+  a.opt.fn();
+}
+
+/* ============================================================
+   EVENTS & ECONOMY
+   ============================================================ */
+function pickW(list){ const tot=list.reduce((s,e)=>s+e.w,0); let r=Math.random()*tot;
+  for(const e of list){ if((r-=e.w)<0) return e; } return list[0]; }
+const EVENTS=[
+  {w:3, run(){ S.pmCount++; S.pmName=pick(PM_FIRST)+" "+pick(PM_LAST); bump({morale:+5});
+    toast("NEW PRIME MINISTER",`${S.pmName} enters No.10 promising 'stability'. You feel a flicker of hope. It passes.`,""); }},
+  {w:2, run(){ S.bills=Math.round(S.bills*1.18); bump({morale:-8});
+    toast("ENERGY PRICE CAP",`The cap rises again "to protect consumers". Bills now £${S.bills}/day. The radiator watches you smugly.`,"bad"); }},
+  {w:2, run(){ bump({morale:-6}); toast("TRAIN STRIKE","All trains cancelled. You weren't going anywhere, but it's the principle of the thing.","bad"); }},
+  {w:1, run(){ setWeather("sun"); bump({morale:+25});
+    toast("SUNNY SPELL","20°C. The nation loses its mind. Every barbecue in a 3-mile radius ignites simultaneously.","good"); }},
+  {w:2, run(){ S.mealPrice+=0.60; bump({morale:-4});
+    toast("SHRINKFLATION",`Your favourite crisps: same bag, six crisps. Meal deal now £${S.mealPrice.toFixed(2)}. "A deal," insists the shop.`,"bad"); }},
+  {w:2, run(){ bump({morale:-8}); toast("SEWAGE ALERT","The local river has been reclassified as 'chunky'. Swimming discouraged; wading unthinkable.","bad"); }},
+  {w:1, run(){ bump({morale:+8}); toast("ROYAL OCCASION","Someone royal waved from a car. Bunting deployed within minutes. Street party in light drizzle. Perfect.","good"); }},
+  {w:1, run(){ S.bills+=4; bump({morale:-5}); toast("INTEREST RATES","Rates rise again. You don't fully understand it, but everyone on telly looks worried, so you are too.","bad"); }},
+  {w:1, run(){ bump({morale:+6}); toast("THE LETTUCE","A supermarket lettuce has now outlasted three ministers and a regional airline. It gives a press conference.","good"); }},
+  {w:1, run(){ S.money-=12; bump({morale:-6}); toast("POTHOLE","A pothole the size of a paddling pool eats your wing mirror. The council thanks you for your feedback.","bad"); }},
+];
+
+function setWeather(w){ S.weather=w; $("weather").textContent={rain:"🌧️",drizzle:"🌦️",overcast:"☁️",sun:"☀️"}[w]; }
+function rollWeather(){ const r=Math.random(); setWeather(r<0.55?"rain":r<0.75?"drizzle":r<0.95?"overcast":"sun"); }
+
+function newDay(){
+  S.day++; S.money-=S.bills; S.mealPrice*=1.012; rollWeather();
+  toast("NEW DAY",`Day ${S.day}. Bills paid: £${S.bills}. The meal deal quietly rises to £${S.mealPrice.toFixed(2)}. Nobody voted for this specifically.`,"");
+  if(S.irishApplied && !S.irishPassport && S.day>=S.irishApplied+2){
+    S.irishPassport=true;
+    $("escapeBtn").textContent="✈️ BOOK ONE-WAY FLIGHT — £999 (EU LANE)";
+    toast("AN ENVELOPE ARRIVES","A burgundy passport. You are, administratively speaking, European again. Flights just got cheaper and the airport queue shorter.","good");
+  }
+}
+
+/* ============================================================
+   SIMULATION
+   ============================================================ */
+function simTick(dt){
+  const n=S.needs;
+  n.tea=clamp(n.tea-0.85*dt); n.hunger=clamp(n.hunger-0.5*dt);
+  n.energy=clamp(n.energy-(C.act&&C.act.zzz?0:0.32)*dt);
+  n.bladder=clamp(n.bladder+0.22*dt);
+  const cold=S.weather==="rain"?0.95:S.weather==="sun"?0.3:0.6;
+  n.warmth=clamp(n.warmth+(S.heating?2.0:-cold)*dt);
+  let md=0.25;
+  if(n.tea<15)md+=0.5; if(n.hunger<15)md+=0.4; if(n.warmth<15)md+=0.5;
+  if(n.bladder>92)md+=0.4; if(n.energy<12)md+=0.35;
+  n.morale=clamp(n.morale-md*dt);
+  if(S.heating) S.money-=0.10*dt;
+
+  if(n.bladder>=100){
+    S.accidents++; n.bladder=12; bump({morale:-16});
+    particles.push({type:'puddle', x:iso(C.x+0.5,C.y+0.5).x, y:iso(C.x+0.5,C.y+0.5).y, life:6});
+    toast("OH NO","Too much tea, too few loo breaks. We shall never speak of the incident. The carpet remembers.","bad");
   }
 
-  // events
+  S.hour+=dt*0.25;                          // 96s = 24h at 1x
+  if(S.hour>=24){ S.hour-=24; newDay(); }
   S.evT-=dt;
-  if(S.evT<=0){ S.evT=15+Math.random()*10; pickW(EVENTS).run(); }
+  if(S.evT<=0){ S.evT=16+Math.random()*12; pickW(EVENTS).run(); }
 
-  render();
-
-  // endings
-  if(S.needs.morale<=0) gameOver("EMIGRATED",
-    "Your Brit's morale finally gave out. They've moved to Australia, where they now complain about the heat, the spiders, and — inexplicably — miss the queues.");
-  else if(S.money<=-500) gameOver("OVERDRAWN",
-    "The overdraft has achieved sentience and repossessed the sofa. Your Brit has moved back in with their mum, aged 47. The kettle survives.");
-  else if(S.money>=2000) $("escapeBtn").style.display="block";
+  if(n.morale<=0) return gameOver("EMIGRATED",
+    `${S.name}'s morale finally gave out. They've moved to Australia, where they now complain about the heat, the spiders, and — inexplicably — miss the queues.`);
+  if(S.money<=-500) return gameOver("OVERDRAWN",
+    "The overdraft has achieved sentience and repossessed the sofa. "+S.name+" has moved back in with their mum, aged "+S.age+". The kettle survives.");
+  $("escapeBtn").style.display = S.money>=(S.irishPassport?999:2000) ? "block":"none";
 }
 
-function render(){
-  for(const k of ["tea","hunger","warmth","morale"]){
-    const v=S.needs[k], bar=$("b-"+k);
-    bar.style.width=v+"%";
-    bar.style.background = v>55 ? "var(--good)" : v>25 ? "var(--mid)" : "var(--bad)";
-    $("v-"+k).textContent=Math.round(v);
+/* ============================================================
+   CHARACTER UPDATE & DRAW
+   ============================================================ */
+function charTick(dt){
+  if(C.path.length){
+    const [tx,ty]=C.path[0];
+    const spd=2.6*dt;
+    const dx=tx-C.x, dy=ty-C.y, dist=Math.hypot(dx,dy);
+    C.dir = Math.abs(dx)>Math.abs(dy) ? (dx>0?1:3) : (dy>0?2:0); // 0=N 1=E 2=S 3=W
+    if(dist<=spd){ C.x=tx; C.y=ty; C.gx=tx; C.gy=ty; C.path.shift();
+      if(!C.path.length && C.pending){ const p=C.pending; C.pending=null; p(); } }
+    else { C.x+=dx/dist*spd; C.y+=dy/dist*spd; }
+    C.phase+=dt*10; C.moving=true;
+  } else C.moving=false;
+
+  if(C.act){
+    C.act.t+=dt;
+    if(C.act.steam && Math.random()<dt*6){
+      const at=C.act.f.use; const p=iso(C.act.f.tiles[0]?C.act.f.tiles[0][0]+0.5:at[0]+0.5, C.act.f.tiles[0]?C.act.f.tiles[0][1]+0.5:at[1]+0.5);
+      particles.push({type:'steam',x:p.x+(Math.random()*10-5),y:p.y-38,vy:-16,life:1.2});
+    }
+    if(C.act.zzz && Math.random()<dt*2.2){
+      const p=iso(1,1); particles.push({type:'zzz',x:p.x+(Math.random()*14-7),y:p.y-40,vy:-13,life:1.8});
+    }
+    if(C.act.t>=C.act.dur) finishAction();
   }
-  const avg=(S.needs.tea+S.needs.hunger+S.needs.warmth+S.needs.morale)/4;
-  $("plumbob").style.background = avg>55 ? "var(--good)" : avg>28 ? "var(--mid)" : "var(--bad)";
-  $("plumbob").style.color = avg>55 ? "#3fa34d" : avg>28 ? "#e0a800" : "#c0392b";
-  const m=S.needs.morale;
-  $("moraleFace").textContent = m>75?"😄":m>50?"🙂":m>30?"😐":m>12?"☹️":"😭";
-  $("day").textContent=S.day;
-  $("pmCount").textContent=S.pmCount;
-  $("pmName").textContent=S.pmName;
-  const mon=$("money");
-  mon.classList.toggle("neg", S.money<0);
-  mon.querySelector("b").textContent = (S.money<0?"−£":"£")+Math.abs(S.money).toFixed(2);
-  $("costs").innerHTML =
-    `💷 Bills: <b>£${S.bills}/day</b><br>🥪 Meal deal: <b>£${S.mealPrice.toFixed(2)}</b><br>` +
-    `♨️ Heating: <b>${S.heating?"ON (£48/day-ish)":"off (wear the Big Coat)"}</b>`;
-  const warn=[];
-  if(S.needs.tea<15) warn.push("⚠️ TEA CRITICAL — society at risk");
-  if(S.needs.warmth<15) warn.push("🥶 Freezing — heat or eat?");
-  if(S.needs.hunger<15) warn.push("🍞 Running on toast fumes");
-  $("warnings").innerHTML = warn.join("<br>");
+}
+function drawChar(){
+  if(C.hidden) return;
+  let px, py, sitting=false;
+  if(C.sitAt){ const p=iso(7.6,3.5); px=p.x; py=p.y-10; sitting=true; }
+  else { const p=iso(C.x+0.5,C.y+0.5); px=p.x; py=p.y; }
+  // shadow
+  ctx.fillStyle="rgba(0,0,0,.18)"; ctx.beginPath(); ctx.ellipse(px,py-2,11,5,0,0,7); ctx.fill();
+  const bob=C.moving?Math.sin(C.phase)*1.5:0;
+  // legs
+  if(!sitting){
+    ctx.fillStyle="#39424e";
+    const sw=C.moving?Math.sin(C.phase)*3:0;
+    ctx.fillRect(px-6, py-14, 5, 12+sw*0.6);
+    ctx.fillRect(px+1, py-14, 5, 12-sw*0.6);
+  }
+  // body
+  ctx.fillStyle=C.jumper;
+  ctx.beginPath(); ctx.roundRect(px-9, py-32+bob-(sitting?-6:0), 18, 20, 6); ctx.fill();
+  // arms
+  ctx.fillStyle=shade(C.jumper,-18);
+  ctx.fillRect(px-11, py-30+bob, 4, 13); ctx.fillRect(px+7, py-30+bob, 4, 13);
+  // head
+  ctx.fillStyle=C.skin; ctx.beginPath(); ctx.arc(px, py-40+bob, 8.5, 0, 7); ctx.fill();
+  ctx.fillStyle=C.hair; ctx.beginPath(); ctx.arc(px, py-43+bob, 8.5, Math.PI, 2*Math.PI); ctx.fill();
+  if(C.dir!==0){ // face when not facing away
+    ctx.fillStyle="#222";
+    const fx=C.dir===1?2:C.dir===3?-2:0;
+    ctx.fillRect(px-3+fx, py-41+bob, 2, 2.6); ctx.fillRect(px+2+fx, py-41+bob, 2, 2.6);
+  }
+  // plumbob
+  const avg=(S.needs.tea+S.needs.hunger+S.needs.warmth+S.needs.morale+S.needs.energy+(100-S.needs.bladder))/6;
+  const col=avg>55?"#4cc25c":avg>28?"#e8b322":"#d9463c";
+  const spin=Math.abs(Math.cos(perf*2.2))*7+1.5;
+  ctx.fillStyle=col; ctx.strokeStyle="rgba(255,255,255,.7)";
+  ctx.beginPath(); ctx.moveTo(px, py-66+bob); ctx.lineTo(px+spin, py-58+bob);
+  ctx.lineTo(px, py-50+bob); ctx.lineTo(px-spin, py-58+bob); ctx.closePath(); ctx.fill(); ctx.stroke();
+  // action bubble + progress
+  if(C.act && !C.act.hide) drawProgress(px, py-78+bob, C.act);
+}
+function drawProgress(px,py,act){
+  const w=110, frac=Math.min(1,act.t/act.dur);
+  ctx.font="600 11px 'Segoe UI'"; const tw=Math.max(w,ctx.measureText(act.label).width+14);
+  ctx.fillStyle="rgba(255,255,255,.94)"; ctx.strokeStyle="#012169";
+  ctx.beginPath(); ctx.roundRect(px-tw/2, py-24, tw, 18, 8); ctx.fill(); ctx.stroke();
+  ctx.fillStyle="#012169"; ctx.textAlign="center"; ctx.fillText(act.label, px, py-11);
+  ctx.fillStyle="#d8d2c2"; ctx.fillRect(px-w/2, py, w, 5);
+  ctx.fillStyle="#C8102E"; ctx.fillRect(px-w/2, py, w*frac, 5);
 }
 
-/* ================= ENDINGS ================= */
-function statsBlock(){
-  return `<div class="stats">📅 Days survived: <b>${S.day}</b><br>☕ Cups of tea: <b>${S.teas}</b><br>` +
-    `🚶 Queues joined: <b>${S.queues}</b><br>🏛️ Prime Ministers outlasted: <b>${S.pmCount}</b><br>` +
-    `💷 Final balance: <b>${(S.money<0?"−£":"£")+Math.abs(S.money).toFixed(2)}</b></div>`;
+/* ============================================================
+   PARTICLES & RAIN
+   ============================================================ */
+const particles=[];
+let rain=[];
+function initRain(){ rain=[]; const n=S.weather==="rain"?110:S.weather==="drizzle"?45:0;
+  for(let i=0;i<n;i++) rain.push({x:Math.random()*2000-200, y:Math.random()*900, s:260+Math.random()*180}); }
+function drawParticles(dt){
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i]; p.life-=dt; if(p.life<=0){ particles.splice(i,1); continue; }
+    if(p.type==='steam'){ p.y+=p.vy*dt; ctx.fillStyle=`rgba(255,255,255,${p.life*0.5})`;
+      ctx.beginPath(); ctx.arc(p.x,p.y,3+(1.2-p.life)*4,0,7); ctx.fill(); }
+    if(p.type==='zzz'){ p.y+=p.vy*dt; p.x+=Math.sin(p.life*6)*0.6;
+      ctx.fillStyle=`rgba(120,150,255,${Math.min(1,p.life)})`; ctx.font="bold 13px 'Segoe UI'"; ctx.fillText("z",p.x,p.y); }
+    if(p.type==='txt'){ p.y+=p.vy*dt; ctx.globalAlpha=Math.min(1,p.life); ctx.fillStyle=p.col;
+      ctx.font="800 14px 'Segoe UI'"; ctx.textAlign="center"; ctx.fillText(p.txt,p.x,p.y); ctx.globalAlpha=1; }
+    if(p.type==='puddle'){ ctx.fillStyle=`rgba(220,190,60,${Math.min(0.5,p.life*0.12)})`;
+      ctx.beginPath(); ctx.ellipse(p.x,p.y,13,6,0,0,7); ctx.fill(); }
+  }
 }
-function gameOver(title, text){
-  if(S.over) return;
-  S.over=true; clearInterval(loop);
-  $("overlayCard").innerHTML =
-    `<h1>${title}</h1><div class="sub">Rule Britannia, etc.</div><p>${text}</p>${statsBlock()}` +
-    `<button onclick="startGame()">HAVE ANOTHER GO 🫖</button>` +
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+let view={s:1,tx:0,ty:0};
+function resize(){
+  const r=$("stage").getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+  cv.width=Math.round(r.width*dpr); cv.height=Math.round(r.height*dpr);
+  const wW=(GW+GH)*TW+40, wH=(GW+GH)*TH+OY+60;
+  view.s=Math.min(r.width/wW, r.height/wH)*dpr;
+  view.tx=(cv.width-wW*view.s)/2; view.ty=(cv.height-wH*view.s)/2+8*view.s;
+}
+window.addEventListener("resize", resize);
+
+function render(dt){
+  const r=$("stage").getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+  if(cv.width!==Math.round(r.width*dpr) || cv.height!==Math.round(r.height*dpr)) resize();
+  ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.setTransform(view.s,0,0,view.s,view.tx,view.ty);
+  // floor
+  for(let y=0;y<GH;y++) for(let x=0;x<GW;x++){
+    const A=iso(x,y),B=iso(x+1,y),Cc=iso(x+1,y+1),D=iso(x,y+1);
+    poly([A,B,Cc,D], FLOORS[roomAt(x,y)](x,y), false);
+  }
+  // rug
+  const rc=iso(8,2.4); ctx.fillStyle="#b3543e"; ctx.beginPath(); ctx.ellipse(rc.x,rc.y,52,24,0,0,7); ctx.fill();
+  ctx.strokeStyle="#8f4232"; ctx.stroke();
+  // drawables sorted
+  const dws=[];
+  for(const w of walls) dws.push({k:w.gx+w.gy-0.45, f:()=>drawWallSeg(w)});
+  for(const f of FURN) dws.push({k:f.anchor, f:f.draw});
+  dws.push({k:C.x+C.y+0.1, f:drawChar});
+  dws.sort((a,b)=>a.k-b.k);
+  for(const d of dws) d.f();
+  // hidden-action progress over object
+  if(C.act && C.act.hide){
+    const f=C.act.f, t=f.tiles[0]||f.use, p=iso(t[0]+0.5,t[1]+0.5);
+    drawProgress(p.x, p.y-70, C.act);
+  }
+  drawParticles(dt);
+  // rain
+  if(rain.length){
+    ctx.strokeStyle="rgba(210,225,255,.38)"; ctx.lineWidth=1.2;
+    for(const d of rain){
+      d.y+=d.s*dt; d.x+=d.s*dt*0.18;
+      if(d.y>820){ d.y=-20; d.x=Math.random()*2000-300; }
+      ctx.beginPath(); ctx.moveTo(d.x,d.y); ctx.lineTo(d.x-4,d.y+13); ctx.stroke();
+    }
+    ctx.lineWidth=1;
+  }
+  // day/night tint
+  const h=S.hour;
+  let dark=0;
+  if(h<6) dark=0.42; else if(h<8) dark=0.42*(8-h)/2; else if(h>18) dark=Math.min(0.42, 0.42*(h-18)/4);
+  if(dark>0){ ctx.setTransform(1,0,0,1,0,0); ctx.fillStyle=`rgba(8,14,50,${dark})`; ctx.fillRect(0,0,cv.width,cv.height); }
+  else if(S.weather==="sun"){ ctx.setTransform(1,0,0,1,0,0); ctx.fillStyle="rgba(255,220,90,.07)"; ctx.fillRect(0,0,cv.width,cv.height); }
+}
+function drawWallSeg(w){
+  if(w.t==='ns') box(w.gx-0.07, w.gy, 0.14, 1, w.h, w.c);
+  else box(w.gx, w.gy-0.07, 1, 0.14, w.h, w.c);
+  // windows on back wall
+  if(w.t==='ew'&&w.gy===0&&(w.gx===2||w.gx===12)){
+    const a=iso(w.gx+0.18,0), b=iso(w.gx+0.82,0);
+    const night=S.hour<6||S.hour>19;
+    poly([{x:a.x,y:a.y-72},{x:b.x,y:b.y-72},{x:b.x,y:b.y-34},{x:a.x,y:a.y-34}], night?'#1b2a55':'#a8c6d8', false);
+    ctx.strokeStyle="rgba(255,255,255,.85)"; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo((a.x+b.x)/2,(a.y+b.y)/2-72); ctx.lineTo((a.x+b.x)/2,(a.y+b.y)/2-34); ctx.stroke(); ctx.lineWidth=1;
+  }
+}
+
+/* ============================================================
+   INPUT
+   ============================================================ */
+cv.addEventListener("click", e=>{
+  if(!S.running||S.over) return;
+  const r=cv.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+  const mx=((e.clientX-r.left)*dpr-view.tx)/view.s, my=((e.clientY-r.top)*dpr-view.ty)/view.s;
+  // furniture hit (topmost = highest anchor)
+  let hit=null;
+  for(const f of FURN) if(MENUS[f.id] && mx>=f.hb.x0&&mx<=f.hb.x1&&my>=f.hb.y0&&my<=f.hb.y1)
+    if(!hit||f.anchor>hit.anchor) hit=f;
+  if(hit){ openMenu(hit, e.clientX-r.left, e.clientY-r.top); return; }
+  closeMenu();
+  // floor click → walk
+  const tx=Math.floor(((mx-OX)/TW + (my-OY)/TH)/2), ty=Math.floor(((my-OY)/TH - (mx-OX)/TW)/2);
+  if(tx>=0&&ty>=0&&tx<GW&&ty<GH&&!blocked.has(tx+","+ty)&&!C.busy) walkTo(tx,ty);
+});
+document.addEventListener("click", e=>{ if(!e.target.closest("#pie")&&e.target.tagName!=="CANVAS") closeMenu(); });
+
+/* speed controls */
+const SPEEDS=[0,1,2.5,5];
+for(let i=0;i<4;i++) $("sp"+i).addEventListener("click",()=>{
+  S.speed=SPEEDS[i];
+  for(let j=0;j<4;j++) $("sp"+j).classList.toggle("on", j===i);
+});
+
+/* ============================================================
+   UI
+   ============================================================ */
+function renderUI(){
+  const n=S.needs;
+  const bars={tea:n.tea,hunger:n.hunger,warmth:n.warmth,bladder:100-n.bladder,energy:n.energy,morale:n.morale};
+  for(const k in bars){
+    const v=bars[k], el=$("b-"+k);
+    el.style.width=v+"%"; el.style.background=v>55?"var(--good)":v>25?"var(--mid)":"var(--bad)";
+    $("v-"+k).textContent=Math.round(k==='bladder'?n.bladder:v);
+  }
+  const m=n.morale;
+  $("face").textContent=m>75?"😄":m>50?"🙂":m>30?"😐":m>12?"☹️":"😭";
+  $("pname").textContent=S.name+", "+S.age;
+  const mon=$("money"); mon.classList.toggle("neg",S.money<0);
+  mon.querySelector("b").textContent=(S.money<0?"−£":"£")+Math.abs(S.money).toFixed(2);
+  const hh=String(Math.floor(S.hour)).padStart(2,"0"), mm=String(Math.floor((S.hour%1)*60)).padStart(2,"0");
+  $("clock").textContent=`Day ${S.day} · ${hh}:${mm}`;
+  $("pmLine").innerHTML=`PM #${S.pmCount}: <b>${S.pmName}</b>`;
+  const warn=[];
+  if(n.tea<15) warn.push("⚠️ TEA CRITICAL");
+  if(n.warmth<15) warn.push("🥶 Freezing — heat or eat?");
+  if(n.hunger<15) warn.push("🍞 Running on toast fumes");
+  if(n.bladder>85) warn.push("🚽 The tea wants OUT");
+  if(n.energy<15) warn.push("😴 Running on fumes and Yorkshire Gold");
+  $("warnings").innerHTML=warn.join("<br>");
+}
+
+/* ============================================================
+   ENDINGS
+   ============================================================ */
+function statsBlock(){
+  return `<div class="stats">📅 Days survived: <b>${S.day}</b> · ☕ Cups of tea: <b>${S.teas}</b><br>` +
+    `🚶 Queues joined: <b>${S.queues}</b> · 🏛️ PMs outlasted: <b>${S.pmCount}</b><br>` +
+    `🚽 Incidents: <b>${S.accidents}</b> · 💷 Final balance: <b>${(S.money<0?"−£":"£")+Math.abs(S.money).toFixed(2)}</b></div>`;
+}
+function gameOver(title,text){
+  if(S.over) return; S.over=true;
+  $("overlayCard").innerHTML=`<h1>${title}</h1><div class="sub">Rule Britannia, etc.</div><p>${text}</p>${statsBlock()}`+
+    `<button onclick="startGame()">HAVE ANOTHER GO 🫖</button>`+
     `<div class="small">The inquiry into what went wrong will report in 2043.</div>`;
   $("overlay").style.display="flex";
 }
 function winGame(){
-  if(S.over) return;
-  S.over=true; clearInterval(loop); S.money-=1999;
-  $("overlayCard").innerHTML =
-    `<h1>ESCAPED! <span>✈️</span></h1><div class="sub">One-way to Lisbon. 90 days at a time, obviously. There are rules now.</div>` +
-    `<p>Your Brit has fled to the Continent, where they will spend the rest of their days enjoying functioning trains, ` +
-    `affordable cheese, and telling everyone how much they miss Greggs.</p>${statsBlock()}` +
-    `<button onclick="startGame()">START AGAIN, YOU MASOCHIST 🇬🇧</button>` +
+  if(S.over) return; S.over=true; S.money-=S.irishPassport?999:1999;
+  $("overlayCard").innerHTML=`<h1>ESCAPED! <span>✈️</span></h1>`+
+    `<div class="sub">${S.irishPassport?"Straight through the EU lane, waving the burgundy book like a lottery ticket.":"One-way to Lisbon. 90 days at a time, obviously. There are rules now."}</div>`+
+    `<p>${S.name} has fled to the Continent, where they will spend the rest of their days enjoying functioning trains, affordable cheese, and telling everyone how much they miss Greggs.</p>${statsBlock()}`+
+    `<button onclick="startGame()">START AGAIN, YOU MASOCHIST 🇬🇧</button>`+
     `<div class="small">You still think about the queues. The beautiful, beautiful queues.</div>`;
   $("overlay").style.display="flex";
 }
+$("escapeBtn").addEventListener("click",winGame);
 
-/* ================= BOOT ================= */
+/* ============================================================
+   MAIN LOOP & BOOT
+   ============================================================ */
+let perf=0;
+function step(raw){
+  if(!S || !S.running || S.over) return;
+  const dt=raw*S.speed;
+  if(dt>0){ simTick(dt); if(!S.over) charTick(dt); }
+}
+/* simulation clock — setInterval so the game survives a backgrounded tab */
+let lastMs=performance.now();
+setInterval(()=>{
+  const now=performance.now(), raw=Math.min(0.1,(now-lastMs)/1000);
+  lastMs=now;
+  step(raw);
+  if(S && S.running) renderUI();
+}, 50);
+/* render clock — rAF, visuals only */
+let last=0;
+function frame(ts){
+  const raw=Math.min(0.05,(ts-last)/1000||0.016); last=ts; perf+=raw;
+  if(S) render(raw*(S.speed||1));
+  requestAnimationFrame(frame);
+}
 function startGame(){
-  clearInterval(loop);
-  S = freshState();
-  S.running=true;
-  document.body.classList.remove("heat-on");
+  S=freshState();
+  C.gx=8; C.gy=4; C.x=8; C.y=4; C.path=[]; C.busy=false; C.act=null; C.pending=null; C.hidden=false; C.sitAt=null;
+  C.jumper=pick(["#b8422f","#3a63b0","#4a7a43","#7a4a8c","#8c6b3a"]);
+  C.skin=pick(["#e8b48c","#c98e63","#8c5a3a","#f0c8a0"]);
+  C.hair=pick(["#5a3a22","#2c2c2c","#b0b0b0","#8c6b3a","#c25a2a"]);
+  particles.length=0;
+  S.running=true; S.speed=1;
+  for(let j=0;j<4;j++) $("sp"+j).classList.toggle("on",j===1);
   $("overlay").style.display="none";
   $("escapeBtn").style.display="none";
+  $("escapeBtn").textContent="✈️ BOOK ONE-WAY FLIGHT — £1,999";
   $("toasts").innerHTML="";
-  $("brit").style.transition="none";
-  $("brit").style.left="20%";
-  setWeather("rain");
-  render();
-  toast("WELCOME HOME","It's raining. The bills are due. The kettle awaits. You've never felt more alive.","good");
-  loop=setInterval(tick, 200);
+  setWeather("rain"); initRain();
+  renderUI();
+  toast("WELCOME HOME",`This is ${S.name}, ${S.age}. It's raining. The bills are due. The kettle awaits. They've never felt more alive.`,"good");
+  toast("HOW TO PLAY","Click objects for options. Click the floor to wander. Mind the bladder — the tea has to go somewhere.","");
 }
+window.startGame=startGame;
+window.G={ get S(){return S;}, C, FURN, MENUS, startAction, walkTo,
+  use(id,opt=0){ const f=FURN.find(f=>f.id===id); startAction(f, MENUS[id][opt]); },
+  step(t){ const n=Math.ceil(t/0.05); for(let i=0;i<n;i++){ perf+=0.05; step(0.05); } renderUI(); render(0.05); } };
 
-for(const id in ACTIONS) $(id).addEventListener("click", ACTIONS[id]);
-$("escapeBtn").addEventListener("click", winGame);
-$("startBtn").addEventListener("click", startGame);
-$("tickertext").textContent = "  "+HEADLINES.sort(()=>Math.random()-0.5).join("   •••   ")+"   •••";
+$("startBtn").addEventListener("click",startGame);
+$("tickertext").textContent="  "+HEADLINES.sort(()=>Math.random()-0.5).join("   •••   ")+"   •••";
+const _oldSetWeather=setWeather;
+setWeather=function(w){ _oldSetWeather(w); initRain(); };
+resize();
+S=freshState(); render(0.016);
+requestAnimationFrame(frame);
 </script>
 </body>
 </html>
