@@ -2,20 +2,22 @@
 <html lang="en-GB">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#012169">
 <title>BRITS™ — A Life Simulation of a Plucky Island Nation</title>
-<!-- v2.0 isometric -->
+<!-- v3.0 create-a-brit + mobile -->
 <style>
   :root{
     --navy:#012169; --navy2:#0a3180; --red:#C8102E; --cream:#f4efe6;
     --good:#4cc25c; --mid:#e8b322; --bad:#d9463c; --panel:#10275f;
   }
-  *{box-sizing:border-box; margin:0; padding:0; user-select:none;}
+  *{box-sizing:border-box; margin:0; padding:0; user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent;}
   html,body{height:100%;}
   body{
     font-family:"Segoe UI", system-ui, sans-serif;
     background:linear-gradient(#5d6f82 0%, #7c8b9b 60%, #4e5a66 100%);
     color:#222; display:flex; flex-direction:column; overflow:hidden;
+    height:100dvh;
   }
   /* ---------- header + ticker ---------- */
   header{
@@ -34,7 +36,7 @@
   @keyframes marquee{to{transform:translateX(-100%);}}
   /* ---------- world ---------- */
   #stage{flex:1; position:relative; min-height:0;}
-  canvas{position:absolute; inset:0; width:100%; height:100%; display:block; cursor:pointer;}
+  canvas#cv{position:absolute; inset:0; width:100%; height:100%; display:block; cursor:pointer; touch-action:none;}
   /* ---------- toasts ---------- */
   #toasts{position:absolute; top:10px; right:12px; z-index:9; display:flex; flex-direction:column; gap:7px; max-width:330px; pointer-events:none;}
   .toast{
@@ -49,17 +51,18 @@
     position:absolute; z-index:10; display:none; flex-direction:column; gap:4px;
     transform:translate(-50%, -100%); filter:drop-shadow(0 6px 12px rgba(0,0,0,.45));
   }
+  #pie.below{transform:translate(-50%, 12px);}
   #pie button{
     border:2px solid #fff; border-radius:18px; background:linear-gradient(#2b57c9,#123387);
-    color:#fff; font-size:12.5px; font-weight:700; padding:7px 14px; cursor:pointer; white-space:nowrap;
+    color:#fff; font-size:13px; font-weight:700; padding:8px 15px; cursor:pointer; white-space:nowrap;
     text-align:left; font-family:inherit;
   }
-  #pie button:hover{background:linear-gradient(#3f6ce0,#1c44a8); transform:scale(1.04);}
+  #pie button:hover{background:linear-gradient(#3f6ce0,#1c44a8);}
   #pie .pietitle{
     text-align:center; color:#fff; font-size:11px; font-weight:800; letter-spacing:1px;
     background:var(--red); border-radius:10px; padding:2px 8px; border:2px solid #fff;
   }
-  /* ---------- bottom panel (Sims-style) ---------- */
+  /* ---------- bottom panel ---------- */
   #panel{
     background:linear-gradient(#1c3a86, var(--panel) 30%, #0a1c48);
     border-top:3px solid #4a6bc4; color:#fff; padding:8px 14px 10px; z-index:5;
@@ -82,7 +85,7 @@
   #rightCol{margin-left:auto; display:flex; flex-direction:column; gap:6px; align-items:flex-end;}
   #speed{display:flex; gap:4px;}
   #speed button{
-    width:34px; height:28px; border-radius:6px; border:2px solid #4a6bc4; background:#0c2158; color:#9db4e8;
+    width:38px; height:32px; border-radius:6px; border:2px solid #4a6bc4; background:#0c2158; color:#9db4e8;
     font-weight:900; cursor:pointer; font-size:12px; font-family:inherit;
   }
   #speed button.on{background:var(--red); color:#fff; border-color:#fff;}
@@ -92,23 +95,99 @@
     background:linear-gradient(#ffd34d,#f0a500); box-shadow:0 3px 0 #b57e00; animation:pulse 1.2s infinite; font-family:inherit;
   }
   @keyframes pulse{50%{transform:scale(1.05);}}
-  /* ---------- overlay ---------- */
-  #overlay{
-    position:fixed; inset:0; background:rgba(1,33,105,.93); z-index:20; color:#fff;
-    display:flex; align-items:center; justify-content:center; text-align:center;
+  /* ---------- overlays ---------- */
+  .fullOverlay{
+    position:fixed; inset:0; background:rgba(1,33,105,.95); z-index:20; color:#fff;
+    display:flex; align-items:center; justify-content:center; text-align:center; overflow-y:auto;
   }
-  #overlay .card{max-width:640px; padding:30px;}
+  #overlay .card{max-width:640px; padding:30px 20px;}
   #overlay h1{font-size:48px; letter-spacing:4px;}
   #overlay h1 span{color:#ffd34d;}
   #overlay .sub{font-style:italic; margin:8px 0 16px; color:#cdd6ea;}
   #overlay p{margin:10px 0; line-height:1.6; font-size:14.5px;}
   #overlay .stats{background:rgba(255,255,255,.1); border-radius:10px; padding:12px; margin:14px 0; font-size:13.5px; line-height:1.9;}
-  #overlay button{
+  .bigbtn{
     background:var(--red); color:#fff; border:none; font-size:17px; font-weight:800;
     padding:13px 32px; border-radius:10px; cursor:pointer; box-shadow:0 4px 0 #7d0a1d; font-family:inherit;
   }
-  #overlay button:hover{transform:translateY(-2px);}
+  .bigbtn:active{transform:translateY(2px);}
   .small{font-size:11.5px; opacity:.75; margin-top:12px;}
+  /* ---------- CAS (Create-a-Brit) ---------- */
+  #cas{display:none; align-items:flex-start;}
+  #cas.open{display:flex;}
+  #casCard{max-width:980px; width:100%; padding:14px 16px 24px; text-align:left;}
+  #cas h1{font-size:26px; letter-spacing:3px; text-align:center; margin:4px 0 2px;}
+  #cas h1 span{color:#ffd34d;}
+  #cas .sub{font-style:italic; color:#cdd6ea; text-align:center; font-size:12px; margin-bottom:12px;}
+  #casWrap{display:flex; gap:18px; align-items:flex-start;}
+  #casLeft{flex:none; width:250px; display:flex; flex-direction:column; gap:8px; align-items:center;}
+  #casCv{width:250px; height:300px; background:radial-gradient(circle at 50% 30%, #2b4a9e, #0a1c48 80%);
+    border-radius:14px; border:3px solid #4a6bc4; touch-action:none; cursor:grab;}
+  #archTag{font-size:11.5px; color:#ffd34d; font-style:italic; text-align:center; min-height:30px; line-height:1.4; padding:0 4px;}
+  #spinHint{font-size:10px; color:#9db4e8;}
+  #casRight{flex:1; min-width:0; display:flex; flex-direction:column; gap:10px;}
+  .casRow{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+  .casLbl{font-size:10.5px; font-weight:800; letter-spacing:1px; color:#9db4e8; width:78px; flex:none;}
+  #nameIn{
+    background:#0c2158; border:2px solid #4a6bc4; color:#fff; border-radius:8px; padding:7px 10px;
+    font-size:14px; font-weight:700; font-family:inherit; width:180px;
+  }
+  #ageIn{accent-color:var(--red); width:140px;}
+  #ageVal{font-size:13px; font-weight:800; width:30px;}
+  .dice{background:#0c2158; border:2px solid #4a6bc4; border-radius:8px; color:#fff; font-size:15px; padding:5px 9px; cursor:pointer;}
+  #archRow{display:grid; grid-template-columns:repeat(3,1fr); gap:8px;}
+  .archCard{
+    background:#0c2158; border:2px solid #33509c; border-radius:10px; padding:8px 9px; cursor:pointer;
+    transition:border-color .15s, background .15s;
+  }
+  .archCard.sel{border-color:#ffd34d; background:#16307a;}
+  .archCard .an{font-weight:800; font-size:12.5px;}
+  .archCard .ad{font-size:10px; color:#cdd6ea; font-style:italic; margin:2px 0 4px; line-height:1.3;}
+  .archCard .am{font-size:9.5px; color:#9db4e8; line-height:1.45;}
+  .archCard .am .plus{color:#8fe89a;} .archCard .am .minus{color:#ff9a9a;}
+  .swatches{display:flex; gap:6px; flex-wrap:wrap;}
+  .sw{
+    width:30px; height:30px; border-radius:8px; border:2px solid #33509c; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; font-size:12px; background:#0c2158; color:#cfe0ff;
+    font-weight:700; font-family:inherit;
+  }
+  .sw.sel{border-color:#ffd34d; box-shadow:0 0 6px #ffd34d66;}
+  .sw.wide{width:auto; padding:0 8px; font-size:10.5px;}
+  #casBtns{display:flex; gap:10px; justify-content:center; margin-top:6px;}
+  /* ---------- mobile ---------- */
+  @media (max-width:800px){
+    #headSub{display:none;}
+    .logo{font-size:16px;}
+    header{padding:4px 10px;}
+    #ticker{font-size:11px; padding:3px 0;}
+    #ticker .label{padding:3px 6px; font-size:10px;}
+    #toasts{left:8px; right:8px; max-width:none; top:6px;}
+    .toast{font-size:11.5px; padding:6px 9px;}
+    #panel{padding:6px 8px 8px; gap:8px;}
+    #portrait{width:56px; height:56px; border-radius:10px;}
+    #face{font-size:24px;} #pname{font-size:8.5px;}
+    #needsGrid{grid-template-columns:repeat(2, 1fr); gap:2px 10px; flex:1; min-width:0;}
+    .need label{font-size:9px;}
+    .bar{height:8px;}
+    #infoCol{font-size:10.5px; min-width:0; line-height:1.4;}
+    #rightCol{margin-left:0; width:100%; flex-direction:row; align-items:center; justify-content:space-between;}
+    #warnings{text-align:left; font-size:10px; max-width:none; flex:1;}
+    #speed button{width:44px; height:34px;}
+    #escapeBtn{font-size:11px; padding:8px 10px;}
+    #pie button{font-size:14px; padding:11px 18px;}
+    #overlay h1{font-size:34px;}
+    #casWrap{flex-direction:column; align-items:center;}
+    #casLeft{width:100%;}
+    #casCv{width:180px; height:210px;}
+    #archRow{grid-template-columns:repeat(2,1fr);}
+    #casCard{padding:10px 10px 20px;}
+    .casLbl{width:64px; font-size:9.5px;}
+  }
+  @media (max-width:800px) and (orientation:landscape){
+    #ticker{display:none;}
+    #panel{padding:4px 8px;}
+    #portrait{width:44px; height:44px;} #face{font-size:19px;} #pname{display:none;}
+  }
 </style>
 </head>
 <body>
@@ -126,7 +205,7 @@
 </div>
 
 <div id="panel">
-  <div id="portrait"><div id="face">🙂</div><div id="pname">Gary, 47</div></div>
+  <div id="portrait"><div id="face">🙂</div><div id="pname">…</div></div>
   <div id="needsGrid">
     <div class="need"><label>☕ TEA <span id="v-tea"></span></label><div class="bar"><i id="b-tea"></i></div></div>
     <div class="need"><label>🥪 FOOD <span id="v-hunger"></span></label><div class="bar"><i id="b-hunger"></i></div></div>
@@ -148,34 +227,70 @@
       <button id="sp3" title="Ludicrous">▶▶▶</button>
     </div>
     <div id="warnings"></div>
-    <button id="escapeBtn">✈️ BOOK ONE-WAY FLIGHT — £1,999</button>
+    <button id="escapeBtn">✈️</button>
   </div>
 </div>
 
-<div id="overlay">
+<!-- title -->
+<div id="overlay" class="fullOverlay">
   <div class="card" id="overlayCard">
     <h1>BRITS<span>™</span></h1>
     <div class="sub">A life simulation of a plucky island nation, going it alone.</div>
     <p>Keep your Brit topped up on <b>tea, food, warmth, sleep and morale</b> — and mind the
        <b>bladder</b>, because the tea has to go somewhere. Bills climb. Rain falls sideways.
        Prime Ministers rotate like a kebab.</p>
-    <p><b>Click objects</b> for options, click the floor to wander, use ▶▶ to fast-forward through
-       the grim bits. Choose between <b>heating and eating</b>. And if you can save <b>£2,000</b>…
-       there's always the airport.</p>
-    <button id="startBtn">START LIFE 🇬🇧</button>
+    <p><b>Tap objects</b> for options, tap the floor to wander, drag to look around, pinch to zoom.
+       Choose between <b>heating and eating</b>. And if you can save enough… there's always the airport.</p>
+    <button class="bigbtn" id="startBtn">CREATE A BRIT 🇬🇧</button>
     <div class="small">Sunlit uplands sold separately. Terms apply. £350m/week not included.</div>
+  </div>
+</div>
+
+<!-- create-a-brit -->
+<div id="cas" class="fullOverlay">
+  <div id="casCard">
+    <h1>CREATE-A-BRIT<span>™</span></h1>
+    <div class="sub">Every one of them is somebody's neighbour.</div>
+    <div id="casWrap">
+      <div id="casLeft">
+        <canvas id="casCv"></canvas>
+        <div id="spinHint">⟲ drag to rotate</div>
+        <div id="archTag"></div>
+      </div>
+      <div id="casRight">
+        <div class="casRow"><span class="casLbl">NAME</span>
+          <input id="nameIn" maxlength="14"><button class="dice" id="nameDice">🎲</button>
+          <span class="casLbl" style="width:auto">AGE</span>
+          <input type="range" id="ageIn" min="18" max="88" value="47"><span id="ageVal">47</span>
+        </div>
+        <div class="casRow"><span class="casLbl">ARCHETYPE</span></div>
+        <div id="archRow"></div>
+        <div class="casRow"><span class="casLbl">SKIN</span><div class="swatches" id="swSkin"></div></div>
+        <div class="casRow"><span class="casLbl">HAIR</span><div class="swatches" id="swHairStyle"></div></div>
+        <div class="casRow"><span class="casLbl">HAIR COL</span><div class="swatches" id="swHairCol"></div></div>
+        <div class="casRow"><span class="casLbl">TOP</span><div class="swatches" id="swTop"></div></div>
+        <div class="casRow"><span class="casLbl">TOP COL</span><div class="swatches" id="swTopCol"></div></div>
+        <div class="casRow"><span class="casLbl">TROUSERS</span><div class="swatches" id="swTrou"></div></div>
+        <div class="casRow"><span class="casLbl">EYEWEAR</span><div class="swatches" id="swGlasses"></div></div>
+        <div id="casBtns">
+          <button class="dice" id="randAll" style="font-size:13px; font-weight:800;">🎲 RANDOMISE</button>
+          <button class="bigbtn" id="beginBtn">START LIFE 🫖</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
 "use strict";
 /* ============================================================
-   BRITS™ v2 — isometric engine
+   BRITS™ v3 — isometric engine + create-a-brit + mobile
    ============================================================ */
-const TW=32, TH=16;                 // half tile width/height
-const GW=14, GH=9;                  // grid size; gy 0..5 interior, 6..8 garden
+const TW=32, TH=16;
+const GW=14, GH=9;
 const OX=(GH)*TW+8, OY=118;
 const WALL_H=92, LOW_H=30;
+const WORLD_W=(GW+GH)*TW+40, WORLD_H=(GW+GH)*TH+OY+60;
 const cv=document.getElementById("cv"), ctx=cv.getContext("2d");
 const $=id=>document.getElementById(id);
 const pick=a=>a[Math.floor(Math.random()*a.length)];
@@ -193,13 +308,12 @@ function poly(pts, fill, stroke){
   ctx.closePath(); ctx.fillStyle=fill; ctx.fill();
   if(stroke!==false){ ctx.strokeStyle="rgba(0,0,0,.16)"; ctx.lineWidth=1; ctx.stroke(); }
 }
-/* iso cuboid from grid rect (gx,gy,w,d), raised z0..z0+h */
 function box(gx,gy,w,d,h,color,z0=0){
   const A=iso(gx,gy), B=iso(gx+w,gy), C=iso(gx+w,gy+d), D=iso(gx,gy+d);
   const up=p=>({x:p.x, y:p.y-z0-h}), lo=p=>({x:p.x, y:p.y-z0});
-  poly([up(A),up(B),up(C),up(D)], shade(color,14));            // top
-  poly([up(D),up(C),lo(C),lo(D)], shade(color,-8));            // SW face
-  poly([up(C),up(B),lo(B),lo(C)], shade(color,-28));           // SE face
+  poly([up(A),up(B),up(C),up(D)], shade(color,14));
+  poly([up(D),up(C),lo(C),lo(D)], shade(color,-8));
+  poly([up(C),up(B),lo(B),lo(C)], shade(color,-28));
 }
 
 /* ============================================================
@@ -207,7 +321,7 @@ function box(gx,gy,w,d,h,color,z0=0){
    ============================================================ */
 const PM_FIRST=["Rt Hon Barnaby","Sir Crispin","Baroness Prue","Dame Hetty","Sir Monty","Tarquin","Bunty","Rt Hon Piers","Sir Aubrey","Mavis","Lord Rupert","Rt Hon Jolyon"];
 const PM_LAST=["Fudge-Whistle","Snodgrass","Chumley-Brown","Trussington","Farquhar-Smythe","Bottomley","Pigeon","Marmaduke","Crumpet","Wetherby","Gove-Adjacent","Lettuce-Botham"];
-const NAMES=["Gary","Barbara","Nigel","Doreen","Kev","Tracey","Colin","Pam","Terry","Sandra","Brian","Maureen"];
+const NAMES=["Gary","Barbara","Nigel","Doreen","Kev","Tracey","Colin","Pam","Terry","Sandra","Brian","Maureen","Dave","Linda","Steve","Jackie","Clive","Bev","Rodney","Glenda"];
 const HEADLINES=[
   "Water company apologises for sewage, awards CEO record bonus",
   "Lettuce outlasts another cabinet minister",
@@ -245,40 +359,174 @@ const TV_NEWS=[
 ];
 
 /* ============================================================
+   CREATE-A-BRIT — looks & archetypes
+   ============================================================ */
+const SKINS=['#f0c8a0','#e8b48c','#c98e63','#a06a42','#8c5a3a','#6b4226','#e8988a'];
+const HAIRCOLS=['#2c2c2c','#5a3a22','#8c6b3a','#c25a2a','#b0b0b0','#e8d48a'];
+const HAIRSTYLES=[
+  {id:'short', l:'Short'},{id:'bald', l:'Bald'},{id:'perm', l:'Perm'},{id:'bun', l:'Bun'},
+  {id:'cap', l:'Flat cap'},{id:'bucket', l:'Bucket'},{id:'beanie', l:'Beanie'},
+];
+const TOPS=[
+  {id:'jumper', l:'Jumper'},{id:'polo', l:'Polo'},{id:'hivis', l:'Hi-vis'},{id:'wax', l:'Wax jacket'},
+  {id:'hoodie', l:'Hoodie'},{id:'cardigan', l:'Cardigan'},{id:'lions', l:'3 Lions'},
+];
+const TOPCOLS=['#b8422f','#3a63b0','#4a7a43','#7a4a8c','#8c6b3a','#c9a227','#476072','#8a2f4f'];
+const TROUCOLS=['#39424e','#5a4632','#274060','#a33434','#556b2f','#707070'];
+const GLASSES=[{id:'none', l:'None'},{id:'round', l:'Round'},{id:'sunnies', l:'Sunnies'}];
+
+const ARCH=[
+  {id:'gammon', name:'The Gammon', tag:'"I\'m not angry, I\'m FURIOUS, and also fine."',
+    desc:'Radiates heat and grievance in equal measure. The news is his cardio.',
+    mods:{news:+8, warmth:0.7, pub:1.25},
+    lines:['<span class="plus">+ The news makes him STRONGER</span>','<span class="plus">+ Runs hot — warmth lasts longer</span>','<span class="minus">− Always gets the rounds in (pub +25%)</span>'],
+    preset:{skin:'#e8988a', hairStyle:'bald', hair:'#b0b0b0', top:'polo', topCol:'#476072', trouCol:'#5a4632', glasses:'none'}},
+  {id:'gent', name:'The Landed Gent', tag:'"One doesn\'t discuss money. One simply has none left."',
+    desc:'Asset rich, cash poor, morally flexible. The east wing is closed for winter.',
+    mods:{startMoney:900, wage:0.35, bills:1.25, rainImmune:true},
+    lines:['<span class="plus">+ Starts with £900 (the trust)</span>','<span class="plus">+ Simply does not notice weather</span>','<span class="minus">− Allowance wages, bills +25%</span>'],
+    preset:{skin:'#f0c8a0', hairStyle:'cap', hair:'#b0b0b0', top:'wax', topCol:'#4a7a43', trouCol:'#a33434', glasses:'none'}},
+  {id:'liberal', name:'The Islington Liberal', tag:'"I\'m basically European. I have a bike."',
+    desc:'Grieves nightly over a sourdough starter. Has an Irish granny on standby.',
+    mods:{tea:0.8, news:-5, irishCost:45, irishDays:1},
+    lines:['<span class="plus">+ Irish granny pre-located (fast, cheap passport)</span>','<span class="plus">+ Numb to the news by now</span>','<span class="minus">− Oat milk: tea 20% weaker</span>'],
+    preset:{skin:'#e8b48c', hairStyle:'bun', hair:'#5a3a22', top:'cardigan', topCol:'#c9a227', trouCol:'#274060', glasses:'round'}},
+  {id:'nan', name:'Northern Nan', tag:'"Put a cardie on, you\'ll be fine."',
+    desc:'Survived rationing, eleven recessions and your nonsense. Runs on tea and spite.',
+    mods:{tea:1.5, warmth:0.6, wage:0.6, sticker:6},
+    lines:['<span class="plus">+ Tea is 50% stronger</span>','<span class="plus">+ Made of sterner stuff (slow warmth loss)</span>','<span class="plus">+ Yellow-sticker royalty</span>','<span class="minus">− Pension wages</span>'],
+    preset:{skin:'#f0c8a0', hairStyle:'perm', hair:'#b0b0b0', top:'cardigan', topCol:'#7a4a8c', trouCol:'#707070', glasses:'round'}},
+  {id:'vanman', name:'White Van Man', tag:'"Can\'t park there, mate."',
+    desc:'The backbone of the nation, doing 58 in the middle lane with a flask of builder\'s.',
+    mods:{wage:1.3, teaDecay:0.8, pothole:2},
+    lines:['<span class="plus">+ Wages +30%</span>','<span class="plus">+ Flask on board (tea lasts longer)</span>','<span class="minus">− Potholes eat the van (2× damage)</span>'],
+    preset:{skin:'#e8b48c', hairStyle:'short', hair:'#2c2c2c', top:'hivis', topCol:'#c9a227', trouCol:'#39424e', glasses:'sunnies'}},
+  {id:'student', name:'The Student', tag:'"It\'s not a phase, it\'s a deferred career."',
+    desc:'Nocturnal, overdrawn, and powered entirely by beans. Owns one saucepan.',
+    mods:{startMoney:60, bills:0.6, energy:1.4, beans:1.6, overdraft:-800, escape:1500},
+    lines:['<span class="plus">+ Cheap digs, deep overdraft (−£800)</span>','<span class="plus">+ Beans are a food group</span>','<span class="plus">+ Travels light (escape £1,500)</span>','<span class="minus">− Nocturnal (energy drains fast)</span>'],
+    preset:{skin:'#c98e63', hairStyle:'beanie', hair:'#2c2c2c', top:'hoodie', topCol:'#3a63b0', trouCol:'#39424e', glasses:'none'}},
+];
+
+let LOOK={ skin:SKINS[1], hairStyle:'short', hair:'#5a3a22', top:'jumper', topCol:'#b8422f', trouCol:'#39424e', glasses:'none' };
+let CAS={ name:pick(NAMES), age:47, arch:ARCH[0], theta:2.2, drag:null };
+
+/* ---- the shared character renderer (game + CAS turntable) ---- */
+function drawSim(g,px,py,sc,facing,look,o={}){
+  g.save(); g.translate(px,py); g.scale(sc,sc);
+  const mir=facing===3; if(mir) g.scale(-1,1);
+  const f=mir?1:facing;             // 0=back 1=profile(E) 2=front
+  const front=f===2, back=f===0, prof=f===1;
+  const bob=o.walk?Math.sin(o.phase)*1.5:0;
+  const sit=!!o.sitting;
+  // shadow
+  g.fillStyle="rgba(0,0,0,.18)"; g.beginPath(); g.ellipse(0,-2,11,5,0,0,7); g.fill();
+  // legs
+  if(!sit){
+    g.fillStyle=look.trouCol;
+    const sw=o.walk?Math.sin(o.phase)*3:0;
+    g.fillRect(-6,-14,5,12+sw*0.6); g.fillRect(1,-14,5,12-sw*0.6);
+  }
+  const by=-32+bob+(sit?6:0);       // body top y
+  // hoodie hood behind head (back view: big hood)
+  if(look.top==='hoodie'&&back){ g.fillStyle=shade(look.topCol,-24); g.beginPath(); g.arc(0,-40+bob,9.5,0,7); g.fill(); }
+  // body
+  const bodyCol = look.top==='hivis' ? '#f5c518' : look.top==='lions' ? '#f2f2f2' : look.topCol;
+  g.fillStyle=bodyCol;
+  g.beginPath(); g.roundRect(-9,by,18,20,6); g.fill();
+  // top details
+  if(look.top==='hivis'){ g.fillStyle='#c8c8c8'; g.fillRect(-9,by+8,18,3.5); g.fillStyle='#f57f17'; g.fillRect(-9,by+15,18,5); }
+  if(look.top==='wax'){ g.fillStyle=shade(bodyCol,-20); g.fillRect(-7,by+11,5,6); g.fillRect(2,by+11,5,6); g.fillRect(-9,by,18,3); }
+  if(look.top==='cardigan'&&!back){ g.strokeStyle=shade(bodyCol,-35); g.beginPath(); g.moveTo(0,by+2); g.lineTo(0,by+18); g.stroke();
+    g.fillStyle=shade(bodyCol,-35); g.fillRect(-1.2,by+6,2.4,2); g.fillRect(-1.2,by+11,2.4,2); }
+  if(look.top==='polo'&&!back){ g.fillStyle='#fff'; g.beginPath(); g.moveTo(-4,by); g.lineTo(0,by+5); g.lineTo(4,by); g.closePath(); g.fill(); }
+  if(look.top==='lions'&&front){ g.fillStyle='#1c3aa0'; g.beginPath(); g.arc(-4,by+6,2.2,0,7); g.fill(); }
+  if(look.top==='hoodie'&&!back){ g.strokeStyle=shade(bodyCol,-28); g.beginPath(); g.moveTo(-3,by+3); g.lineTo(-3,by+9); g.moveTo(3,by+3); g.lineTo(3,by+9); g.stroke(); }
+  // arms
+  g.fillStyle=shade(bodyCol,-18);
+  g.fillRect(-11,by+2,4,13); g.fillRect(7,by+2,4,13);
+  // head
+  const hy=-40+bob+(sit?6:0);
+  g.fillStyle=look.skin; g.beginPath(); g.arc(0,hy,8.5,0,7); g.fill();
+  // hair / hat
+  const hc=look.hair;
+  if(look.hairStyle==='short'){ g.fillStyle=hc; g.beginPath(); g.arc(0,hy-3,8.5,Math.PI,2*Math.PI); g.fill();
+    if(back){ g.beginPath(); g.arc(0,hy,8.5,-0.2,Math.PI+0.2); g.fill(); } }
+  if(look.hairStyle==='perm'){ g.fillStyle=hc;
+    for(const [dx,dy] of [[-6,-6],[0,-8.5],[6,-6],[-8,-1],[8,-1]]){ g.beginPath(); g.arc(dx,hy+dy,3.6,0,7); g.fill(); } }
+  if(look.hairStyle==='bun'){ g.fillStyle=hc; g.beginPath(); g.arc(0,hy-3,8.5,Math.PI,2*Math.PI); g.fill();
+    g.beginPath(); g.arc(back?0:(prof?-6:0), hy-9.5, 3.4,0,7); g.fill(); }
+  if(look.hairStyle==='cap'){ g.fillStyle=hc; g.beginPath(); g.arc(0,hy-3.5,8.7,Math.PI,2*Math.PI); g.fill();
+    if(!back){ g.beginPath(); g.ellipse(prof?6:0,hy-3.5,prof?5:8.7,2.4,0,0,7); g.fill(); } }
+  if(look.hairStyle==='bucket'){ g.fillStyle=hc;
+    g.beginPath(); g.moveTo(-7,hy-5); g.lineTo(7,hy-5); g.lineTo(5.5,hy-11); g.lineTo(-5.5,hy-11); g.closePath(); g.fill();
+    g.beginPath(); g.ellipse(0,hy-5,10,2.6,0,0,7); g.fill(); }
+  if(look.hairStyle==='beanie'){ g.fillStyle=hc; g.beginPath(); g.arc(0,hy-3,8.7,Math.PI,2*Math.PI); g.fill();
+    g.fillRect(-8.7,hy-4.5,17.4,3.4); }
+  // face
+  if(!back){
+    const fx=prof?3.5:0;
+    g.fillStyle="#222";
+    if(front){ g.fillRect(-3.4+fx,hy-1.5,2.2,2.8); g.fillRect(1.6+fx,hy-1.5,2.2,2.8); }
+    else { g.fillRect(2.5+fx,hy-1.5,2.2,2.8); }
+    // mouth
+    g.strokeStyle="rgba(60,30,20,.75)"; g.lineWidth=1.1; g.beginPath();
+    if(front){ g.moveTo(-2.4,hy+4.4); g.quadraticCurveTo(0,hy+5.2+(o.mood==='sad'?-2:0),2.4,hy+4.4); }
+    else { g.moveTo(3+fx,hy+4.4); g.lineTo(6+fx,hy+4.2); }
+    g.stroke(); g.lineWidth=1;
+    // glasses
+    if(look.glasses==='round'){
+      g.strokeStyle="#333"; g.lineWidth=1.2;
+      if(front){ g.beginPath(); g.arc(-2.6,hy-0.2,3,0,7); g.moveTo(5.6,hy-0.2); g.arc(2.6,hy-0.2,3,0,7); g.stroke(); }
+      else { g.beginPath(); g.arc(4.2+fx-1,hy-0.2,3,0,7); g.stroke(); }
+      g.lineWidth=1;
+    }
+    if(look.glasses==='sunnies'){
+      g.fillStyle="#111";
+      if(front){ g.fillRect(-6,hy-2.6,5.2,4); g.fillRect(0.8,hy-2.6,5.2,4); g.fillRect(-1,hy-1.6,2,1.4); }
+      else g.fillRect(fx-0.5,hy-2.6,6,4);
+    }
+  }
+  g.restore();
+}
+
+/* ============================================================
    STATE
    ============================================================ */
 let S;
-function freshState(){
+function freshState(arch){
+  const m=arch.mods;
   return {
-    running:false, over:false, speed:1, lastSpeed:1,
+    running:false, over:false, speed:1,
     day:1, hour:8, evT:14,
     pmCount:1, pmName:pick(PM_FIRST)+" "+pick(PM_LAST),
-    name:pick(NAMES), age:29+Math.floor(Math.random()*35),
-    money:120, bills:42, mealPrice:5.49, pintPrice:7.20,
+    name:CAS.name||pick(NAMES), age:CAS.age,
+    arch, look:{...LOOK},
+    money:m.startMoney??120, bills:42, mealPrice:5.49, pintPrice:7.20,
     teas:0, queues:0, accidents:0,
     heating:false, weather:"rain",
     irishApplied:0, irishPassport:false,
     needs:{tea:70,hunger:70,warmth:65,bladder:25,energy:80,morale:60},
   };
 }
-/* character */
+function MOD(k,def){ return (S&&S.arch&&S.arch.mods[k]!==undefined)?S.arch.mods[k]:def; }
+function escapeCost(){ return S.irishPassport?999:MOD('escape',2000); }
+
 const C={ gx:8, gy:4, x:8, y:4, path:[], moving:false, dir:1, phase:0,
-          busy:false, act:null, pending:null, hidden:false, sitAt:null,
-          jumper:"#b8422f", skin:"#e8b48c", hair:"#5a3a22" };
+          busy:false, act:null, pending:null, hidden:false, sitAt:null };
 
 /* ============================================================
-   WORLD — walls, rooms, furniture
+   WORLD — walls, rooms, furniture (unchanged layout from v2)
    ============================================================ */
-/* wall segs: {t:'ns'|'ew', gx, gy, h, c} — ns = west edge of (gx,gy); ew = north edge of (gx,gy) */
 const walls=[];
-for(let x=0;x<GW;x++) walls.push({t:'ew',gx:x,gy:0,h:WALL_H,c:'#e6dcc2'});          // back
-for(let y=0;y<6;y++)  walls.push({t:'ns',gx:0,gy:y,h:WALL_H,c:'#ded2b4'});          // west
+for(let x=0;x<GW;x++) walls.push({t:'ew',gx:x,gy:0,h:WALL_H,c:'#e6dcc2'});
+for(let y=0;y<6;y++)  walls.push({t:'ns',gx:0,gy:y,h:WALL_H,c:'#ded2b4'});
 for(const dx of [4,6,10]) for(let y=0;y<6;y++) if(y!==4)
-  walls.push({t:'ns',gx:dx,gy:y,h:LOW_H,c:'#e6dcc2'});                              // dividers (door gap gy=4)
-for(let x=0;x<GW;x++) if(x!==7) walls.push({t:'ew',gx:x,gy:6,h:LOW_H,c:'#e6dcc2'}); // front (door gap gx=7)
-for(let y=0;y<6;y++)  walls.push({t:'ns',gx:GW,gy:y,h:LOW_H,c:'#ded2b4'});          // east
+  walls.push({t:'ns',gx:dx,gy:y,h:LOW_H,c:'#e6dcc2'});
+for(let x=0;x<GW;x++) if(x!==7) walls.push({t:'ew',gx:x,gy:6,h:LOW_H,c:'#e6dcc2'});
+for(let y=0;y<6;y++)  walls.push({t:'ns',gx:GW,gy:y,h:LOW_H,c:'#ded2b4'});
 for(let y=6;y<GH;y++){ walls.push({t:'ns',gx:0,gy:y,h:14,c:'#f2f2ee'}); walls.push({t:'ns',gx:GW,gy:y,h:14,c:'#f2f2ee'}); }
-for(let x=0;x<GW;x++) if(x!==7) walls.push({t:'ew',gx:x,gy:GH,h:14,c:'#f2f2ee'});   // garden fence
+for(let x=0;x<GW;x++) if(x!==7) walls.push({t:'ew',gx:x,gy:GH,h:14,c:'#f2f2ee'});
 
 function roomAt(gx,gy){
   if(gy>=6) return 'garden';
@@ -292,23 +540,22 @@ const FLOORS={
   garden: (x,y)=> x===7 ? '#b6ad9c' : ((x+y)%2 ? '#6da34d':'#639947'),
 };
 
-/* ---- furniture drawing ---- */
 function drawBed(){
-  box(0,0,2,2,12,'#7a5636');                       // frame
-  box(0.06,0.06,1.88,1.88,8,'#e9e4d8',12);         // mattress
-  box(0.06,0.75,1.88,1.19,9,'#a33434',13);         // duvet
-  box(0.18,0.14,0.72,0.5,6,'#ffffff',20);          // pillows
+  box(0,0,2,2,12,'#7a5636');
+  box(0.06,0.06,1.88,1.88,8,'#e9e4d8',12);
+  box(0.06,0.75,1.88,1.19,9,'#a33434',13);
+  box(0.18,0.14,0.72,0.5,6,'#ffffff',20);
   box(1.05,0.14,0.72,0.5,6,'#ffffff',20);
 }
 function drawWardrobe(){ box(3,0,1,0.85,58,'#8a6642'); const p=iso(3.5,0.85); ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.beginPath(); ctx.moveTo(p.x,p.y-56); ctx.lineTo(p.x,p.y-8); ctx.stroke(); }
 function drawDesk(){
   box(0,3,1,2,20,'#9c7448');
-  box(0.15,3.7,0.7,0.55,2,'#3a3a3a',20);           // laptop base
-  box(0.15,3.62,0.7,0.1,13,'#2c2c34',22);          // laptop screen
+  box(0.15,3.7,0.7,0.55,2,'#3a3a3a',20);
+  box(0.15,3.62,0.7,0.1,13,'#2c2c34',22);
 }
 function drawToilet(){
-  box(5.25,0,0.55,0.35,26,'#eef0ee');              // cistern
-  box(5.2,0.3,0.65,0.55,13,'#f4f6f4');             // bowl
+  box(5.25,0,0.55,0.35,26,'#eef0ee');
+  box(5.2,0.3,0.65,0.55,13,'#f4f6f4');
   const p=iso(5.53,0.58); ctx.fillStyle='#cfd8d8'; ctx.beginPath();
   ctx.ellipse(p.x,p.y-14,10,5.5,0,0,7); ctx.fill();
 }
@@ -319,28 +566,28 @@ function drawBath(){
   const t=iso(4.5,0.18); ctx.fillStyle='#c9cdd1'; ctx.fillRect(t.x-2,t.y-26,4,9);
 }
 function drawTV(){
-  box(7.2,0.05,1.6,0.5,12,'#6b4d30');              // cabinet
-  box(7.3,0.12,1.4,0.22,30,'#23232b',12);          // set
-  // screen face (SW)
+  box(7.2,0.05,1.6,0.5,12,'#6b4d30');
+  box(7.3,0.12,1.4,0.22,30,'#23232b',12);
   const a=iso(7.34,0.36), b=iso(8.66,0.36);
   const on = C.act && C.act.id==='tv';
   poly([{x:a.x,y:a.y-39},{x:b.x,y:b.y-39},{x:b.x,y:b.y-15},{x:a.x,y:a.y-15}], on?'#bfe3ff':'#101018', false);
   if(on){ ctx.fillStyle='#ff8fb0'; ctx.fillRect((a.x+b.x)/2-6,a.y-33,12,8); }
 }
 function drawSofa(){
-  box(7,3.1,2,0.85,13,'#3f6c8e');                  // seat
-  box(7,3.0,2,0.28,30,'#35597a');                  // back
-  box(6.92,3.0,0.22,0.95,22,'#35597a');            // arms
+  box(7,3.1,2,0.85,13,'#3f6c8e');
+  box(7,3.0,2,0.28,30,'#35597a');
+  box(6.92,3.0,0.22,0.95,22,'#35597a');
   box(8.86,3.0,0.22,0.95,22,'#35597a');
-  box(7.15,3.15,0.75,0.6,5,'#4d7fa5',13);          // cushions
+  box(7.15,3.15,0.75,0.6,5,'#4d7fa5',13);
   box(8.1,3.15,0.75,0.6,5,'#4d7fa5',13);
 }
 function drawRadiator(){
-  box(9.15,0.02,0.75,0.16,22,S.heating?'#f3f3f3':'#e8e8e8',4);
+  const heat=S&&S.heating;
+  box(9.15,0.02,0.75,0.16,22,heat?'#f3f3f3':'#e8e8e8',4);
   const a=iso(9.2,0.18), b=iso(9.85,0.18);
   ctx.strokeStyle='rgba(0,0,0,.18)';
   for(let i=1;i<6;i++){ const x=a.x+(b.x-a.x)*i/6, y=a.y+(b.y-a.y)*i/6; ctx.beginPath(); ctx.moveTo(x,y-24); ctx.lineTo(x,y-6); ctx.stroke(); }
-  if(S.heating){ const g=iso(9.5,0.3); ctx.fillStyle='rgba(255,120,20,.22)'; ctx.beginPath(); ctx.ellipse(g.x,g.y-16,26,16,0,0,7); ctx.fill(); }
+  if(heat){ const g=iso(9.5,0.3); ctx.fillStyle='rgba(255,120,20,.22)'; ctx.beginPath(); ctx.ellipse(g.x,g.y-16,26,16,0,0,7); ctx.fill(); }
 }
 function drawShelf(){
   box(6.05,0.02,0.9,0.3,48,'#8a6642');
@@ -351,8 +598,8 @@ function drawShelf(){
 }
 function drawCounter(){
   box(10,0,2,0.8,24,'#b9895a');
-  box(10.55,0.18,0.5,0.42,11,'#c2342a',24);        // kettle body
-  box(10.62,0.22,0.36,0.3,3,'#2c2c2c',35);         // lid
+  box(10.55,0.18,0.5,0.42,11,'#c2342a',24);
+  box(10.62,0.22,0.36,0.3,3,'#2c2c2c',35);
   const s=iso(10.6,0.4); ctx.strokeStyle='#c2342a'; ctx.lineWidth=3;
   ctx.beginPath(); ctx.moveTo(s.x-6,s.y-30); ctx.quadraticCurveTo(s.x-13,s.y-33,s.x-11,s.y-40); ctx.stroke(); ctx.lineWidth=1;
 }
@@ -378,7 +625,7 @@ function drawDoor(){
 function drawGnome(){
   const p=iso(10.5,7.5);
   ctx.fillStyle='#3a63b0'; ctx.beginPath(); ctx.ellipse(p.x,p.y-8,5,7,0,0,7); ctx.fill();
-  ctx.fillStyle=C.skin; ctx.beginPath(); ctx.arc(p.x,p.y-17,4,0,7); ctx.fill();
+  ctx.fillStyle='#e8b48c'; ctx.beginPath(); ctx.arc(p.x,p.y-17,4,0,7); ctx.fill();
   ctx.fillStyle='#fff'; ctx.beginPath(); ctx.ellipse(p.x,p.y-13,4,3,0,0,7); ctx.fill();
   ctx.fillStyle='#c2342a'; ctx.beginPath(); ctx.moveTo(p.x-4,p.y-19); ctx.lineTo(p.x+4,p.y-19); ctx.lineTo(p.x,p.y-30); ctx.closePath(); ctx.fill();
 }
@@ -387,7 +634,6 @@ function drawBins(){
   box(2.55,6.1,0.42,0.42,20,'#4a3a5c'); box(2.5,6.05,0.52,0.52,4,'#39294a',20);
 }
 
-/* ---- furniture registry ---- */
 const FURN=[
   {id:'bed',    name:'BED',        tiles:[[0,0],[1,0],[0,1],[1,1]], use:[2,1], draw:drawBed},
   {id:'wardrobe',name:'WARDROBE',  tiles:[[3,0]], use:[3,1], draw:drawWardrobe},
@@ -402,13 +648,12 @@ const FURN=[
   {id:'sink',   name:'SINK',       tiles:[[12,0]], use:[12,1], draw:drawSink},
   {id:'fridge', name:'FRIDGE',     tiles:[[13,0]], use:[13,1], draw:drawFridge},
   {id:'table',  name:'TABLE',      tiles:[[11,3],[12,3]], use:[12,2], draw:drawTable},
-  {id:'door',   name:'FRONT DOOR', tiles:[], use:[7,6], draw:drawDoor, anchor:7+6, bbox:'door'},
+  {id:'door',   name:'FRONT DOOR', tiles:[], use:[7,6], draw:drawDoor, anchor:13, bbox:'door'},
   {id:'gnome',  name:'GNOME',      tiles:[[10,7]], use:[9,7], draw:drawGnome},
   {id:'bins',   name:'THE BINS',   tiles:[[2,6]], use:[3,6], draw:drawBins},
 ];
 for(const f of FURN){
   if(f.anchor===undefined) f.anchor=Math.max(...f.tiles.map(t=>t[0]+t[1]))+0.3;
-  // hitbox from tiles (or door special)
   const tl=f.bbox==='door'?[[7,5.4],[7.9,5.4]]:f.tiles;
   let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
   for(const [tx,ty] of tl){ for(const [cx,cy] of [[tx,ty],[tx+1,ty],[tx+1,ty+1],[tx,ty+1]]){
@@ -421,7 +666,7 @@ const edgeBlock=new Set();
 for(const w of walls){ if(w.h>=LOW_H||w.h===14) edgeBlock.add(w.t+w.gx+","+w.gy); }
 
 /* ============================================================
-   PATHFINDING (BFS)
+   PATHFINDING
    ============================================================ */
 function canStep(x,y,nx,ny){
   if(nx<0||ny<0||nx>=GW||ny>=GH) return false;
@@ -463,7 +708,11 @@ function toast(title,msg,cls){
   while($("toasts").children.length>4) $("toasts").firstChild.remove();
 }
 function floatText(gx,gy,txt,col){ particles.push({type:'txt',txt,col,x:iso(gx+0.5,gy+0.5).x,y:iso(gx+0.5,gy+0.5).y-60,vy:-14,life:1.6}); }
-function drinkTea(n){ S.teas+=n; bump({tea:+45*n, morale:+8, bladder:+14*n}); }
+function drinkTea(n){
+  const eff=MOD('tea',1);
+  S.teas+=n; bump({tea:+45*n*eff, morale:+8, bladder:+14*n});
+  if(eff<1&&Math.random()<0.3) toast("OAT MILK","It's fine. It's basically the same. (It is not the same.)","");
+}
 
 const MENUS={
   counter:[
@@ -477,7 +726,8 @@ const MENUS={
     {label:"🥪 Meal deal (£)", dur:2, verb:"Assembling a meal deal…", fn(){ S.money-=S.mealPrice; bump({hunger:+40,morale:+3});
       floatText(13,1,"-£"+S.mealPrice.toFixed(2),"#ff9a9a");
       toast("MEAL DEAL",`Sandwich, snack, drink: £${S.mealPrice.toFixed(2)}. The sandwich is 60% air. The air is British.`,""); }},
-    {label:"🫘 Beans on toast (£1.40)", dur:3, verb:"Beans. Toast. Civilisation…", fn(){ S.money-=1.40; bump({hunger:+26,morale:+5,warmth:+4});
+    {label:"🫘 Beans on toast (£1.40)", dur:3, verb:"Beans. Toast. Civilisation…", fn(){ S.money-=1.40;
+      bump({hunger:+26*MOD('beans',1),morale:+5,warmth:+4});
       toast("BEANS ON TOAST","The dish that built an empire and then couldn't afford the empire. Restorative.","good"); }},
   ],
   radiator:[
@@ -486,7 +736,10 @@ const MENUS={
   ],
   tv:[
     {label:"🧁 Watch Bake Off", dur:4, verb:"Watching the telly…", fn(){ bump({morale:+14,energy:-3}); toast("TELLY",pick(TV_COMFORT),"good"); }},
-    {label:"📰 Watch the News", dur:4, verb:"Watching the news… why…", fn(){ bump({morale:-10}); toast("THE NEWS",pick(TV_NEWS),"bad"); }},
+    {label:"📰 Watch the News", dur:4, verb:"Watching the news…", fn(){
+      const d=MOD('news',-10); bump({morale:d});
+      if(d>0) toast("THE NEWS","Absolutely furious. Never felt better. A strongly-worded comment is composed and never posted.","good");
+      else toast("THE NEWS",pick(TV_NEWS),"bad"); }},
   ],
   sofa:[
     {label:"🛋️ Have a sit down", dur:5, verb:"Having a little sit down…", sit:true, fn(){ bump({morale:+10,warmth:+5,energy:+6});
@@ -506,15 +759,16 @@ const MENUS={
   ],
   desk:[
     {label:"💻 WFH shift (+£)", dur:6, verb:"Logging on… (3 Teams calls)", fn(){
-      let wage=115;
-      if(Math.random()<0.15){ wage=80; toast("PAYSLIP","Wages docked: 'administrative recalibration levy'. No further details available.","bad"); }
+      let wage=Math.round(115*MOD('wage',1));
+      if(Math.random()<0.15){ wage=Math.round(wage*0.7); toast("PAYSLIP","Wages docked: 'administrative recalibration levy'. No further details available.","bad"); }
       S.money+=wage; bump({tea:-15,morale:-6,energy:-10}); floatText(0,3,"+£"+wage,"#8fe89a");
       toast("WORK",`A hard day's WFH. £${wage} earned. Someone said "let's take this offline" while already online.`,""); }},
-    {label:"🇮🇪 Apply for Irish passport (£90)", dur:4, verb:"Ringing your nan's cousin in Sligo…", fn(){
+    {label:"🇮🇪 Apply for Irish passport (£)", dur:4, verb:"Ringing the granny network…", fn(){
       if(S.irishPassport){ toast("PASSPORT","You're already European again. Stop showing off.",""); return; }
       if(S.irishApplied){ toast("PASSPORT","Application already in. These things take time. Everything takes time.",""); return; }
-      S.money-=90; S.irishApplied=S.day;
-      toast("PASSPORT OFFICE","Application submitted via a granny in County Sligo. Processing time: 'a while'.",""); }},
+      const cost=MOD('irishCost',90);
+      S.money-=cost; S.irishApplied=S.day;
+      toast("PASSPORT OFFICE",`Application submitted via a granny in County Sligo (£${cost}). Processing time: 'a while'.`,""); }},
     {label:"🏦 Check banking app", dur:2, verb:"Face ID… declined… trying again…", fn(){ bump({morale:-5});
       toast("BANKING APP",`Balance: ${S.money<0?"−£"+Math.abs(S.money).toFixed(2):"£"+S.money.toFixed(2)}. The app suggests "cutting back on small luxuries". The app means tea. The app can get in the sea.`,"bad"); }},
   ],
@@ -531,7 +785,7 @@ const MENUS={
       toast("WASHING UP","Strangely therapeutic. You stare into the garden and think about the war. You weren't in the war.","good"); }},
   ],
   table:[
-    {label:"🍽️ Sit at the table like it's Christmas", dur:3, verb:"Formal dining…", fn(){ bump({morale:+6});
+    {label:"🍽️ Dine formally, alone", dur:3, verb:"Formal dining…", fn(){ bump({morale:+6});
       toast("THE TABLE","You eat at the table instead of the sofa. You feel like royalty. The gravy boat stays in the cupboard. It's not THAT special.","good"); }},
   ],
   gnome:[
@@ -546,16 +800,21 @@ const MENUS={
   door:[
     {label:"🛍️ Pop to the shops", dur:6, verb:"Popping out…", hide:true, fn(){
       const r=Math.random();
-      if(r<0.34){ S.money-=3; bump({hunger:+18,morale:+7}); toast("YELLOW STICKERS","Reduced-section triumph: 4 crumpets, a mystery quiche, and dignity, all for £3.","good"); }
-      else if(r<0.67){ bump({warmth:-18,morale:-5}); toast("WEATHER","The heavens open the moment you step out. No coat, obviously. Classic.","bad"); }
+      if(r<0.34){ const bonus=MOD('sticker',0); S.money-=3; bump({hunger:+18+bonus,morale:+7+bonus});
+        toast("YELLOW STICKERS", bonus?"Reduced-section MASTERCLASS. The staff nod respectfully. £3 for a week's food.":"Reduced-section triumph: 4 crumpets, a mystery quiche, and dignity, all for £3.","good"); }
+      else if(r<0.67){
+        if(MOD('rainImmune',false)){ bump({morale:+3}); toast("WEATHER","The heavens open. One simply does not notice. The wax jacket has seen worse.","good"); }
+        else { bump({warmth:-18,morale:-5}); toast("WEATHER","The heavens open the moment you step out. No coat, obviously. Classic.","bad"); } }
       else { bump({morale:+9}); toast("SMALL TALK","Discussed the weather with a neighbour for 25 minutes. Verdict, jointly reached: 'mad, isn't it'.","good"); } }},
     {label:"🍺 Down the pub (£)", dur:7, verb:"Just the one…", hide:true, fn(){
-      const p=S.pintPrice.toFixed(2); S.money-=S.pintPrice; S.pintPrice+=0.10; bump({morale:+18,warmth:+8,bladder:+20});
-      toast("THE PUB",`A pint is now £${p}. You drink it in protest. Then have another, also in protest.`,"good"); }},
+      const cost=S.pintPrice*MOD('pub',1);
+      S.money-=cost; S.pintPrice+=0.10; bump({morale:+18,warmth:+8,bladder:+20});
+      toast("THE PUB",`A pint is now £${cost.toFixed(2)}. You drink it in protest. Then have another, also in protest.`,"good"); }},
     {label:"🚶 Join a queue (any queue)", dur:6, verb:"Queueing beautifully…", hide:true, fn(){
       S.queues++; bump({morale:+12}); toast("A QUEUE","Forty minutes. You didn't need anything. Magnificent queue though — one of the greats.","good"); }},
   ],
 };
+
 function openMenu(f, sx, sy){
   const pie=$("pie"); pie.innerHTML="";
   const t=document.createElement("div"); t.className="pietitle"; t.textContent=f.name; pie.appendChild(t);
@@ -564,7 +823,10 @@ function openMenu(f, sx, sy){
     b.onclick=e=>{ e.stopPropagation(); closeMenu(); startAction(f,opt); };
     pie.appendChild(b);
   }
-  pie.style.left=sx+"px"; pie.style.top=sy+"px"; pie.style.display="flex";
+  const r=$("stage").getBoundingClientRect();
+  const x=clamp(sx, 100, r.width-100);
+  pie.classList.toggle("below", sy<170);
+  pie.style.left=x+"px"; pie.style.top=sy+"px"; pie.style.display="flex";
 }
 function closeMenu(){ $("pie").style.display="none"; }
 
@@ -610,18 +872,20 @@ const EVENTS=[
   {w:1, run(){ bump({morale:+8}); toast("ROYAL OCCASION","Someone royal waved from a car. Bunting deployed within minutes. Street party in light drizzle. Perfect.","good"); }},
   {w:1, run(){ S.bills+=4; bump({morale:-5}); toast("INTEREST RATES","Rates rise again. You don't fully understand it, but everyone on telly looks worried, so you are too.","bad"); }},
   {w:1, run(){ bump({morale:+6}); toast("THE LETTUCE","A supermarket lettuce has now outlasted three ministers and a regional airline. It gives a press conference.","good"); }},
-  {w:1, run(){ S.money-=12; bump({morale:-6}); toast("POTHOLE","A pothole the size of a paddling pool eats your wing mirror. The council thanks you for your feedback.","bad"); }},
+  {w:1, run(){ const dmg=12*MOD('pothole',1); S.money-=dmg; bump({morale:-6});
+    toast("POTHOLE",`A pothole the size of a paddling pool strikes (£${dmg}). The council thanks you for your feedback.`,"bad"); }},
 ];
 
-function setWeather(w){ S.weather=w; $("weather").textContent={rain:"🌧️",drizzle:"🌦️",overcast:"☁️",sun:"☀️"}[w]; }
+function setWeather(w){ S.weather=w; $("weather").textContent={rain:"🌧️",drizzle:"🌦️",overcast:"☁️",sun:"☀️"}[w]; initRain(); }
 function rollWeather(){ const r=Math.random(); setWeather(r<0.55?"rain":r<0.75?"drizzle":r<0.95?"overcast":"sun"); }
 
 function newDay(){
-  S.day++; S.money-=S.bills; S.mealPrice*=1.012; rollWeather();
-  toast("NEW DAY",`Day ${S.day}. Bills paid: £${S.bills}. The meal deal quietly rises to £${S.mealPrice.toFixed(2)}. Nobody voted for this specifically.`,"");
-  if(S.irishApplied && !S.irishPassport && S.day>=S.irishApplied+2){
+  S.day++;
+  const b=Math.round(S.bills*MOD('bills',1));
+  S.money-=b; S.mealPrice*=1.012; rollWeather();
+  toast("NEW DAY",`Day ${S.day}. Bills paid: £${b}. The meal deal quietly rises to £${S.mealPrice.toFixed(2)}. Nobody voted for this specifically.`,"");
+  if(S.irishApplied && !S.irishPassport && S.day>=S.irishApplied+MOD('irishDays',2)){
     S.irishPassport=true;
-    $("escapeBtn").textContent="✈️ BOOK ONE-WAY FLIGHT — £999 (EU LANE)";
     toast("AN ENVELOPE ARRIVES","A burgundy passport. You are, administratively speaking, European again. Flights just got cheaper and the airport queue shorter.","good");
   }
 }
@@ -631,11 +895,11 @@ function newDay(){
    ============================================================ */
 function simTick(dt){
   const n=S.needs;
-  n.tea=clamp(n.tea-0.85*dt); n.hunger=clamp(n.hunger-0.5*dt);
-  n.energy=clamp(n.energy-(C.act&&C.act.zzz?0:0.32)*dt);
+  n.tea=clamp(n.tea-0.85*MOD('teaDecay',1)*dt); n.hunger=clamp(n.hunger-0.5*dt);
+  n.energy=clamp(n.energy-(C.act&&C.act.zzz?0:0.32*MOD('energy',1))*dt);
   n.bladder=clamp(n.bladder+0.22*dt);
   const cold=S.weather==="rain"?0.95:S.weather==="sun"?0.3:0.6;
-  n.warmth=clamp(n.warmth+(S.heating?2.0:-cold)*dt);
+  n.warmth=clamp(n.warmth+(S.heating?2.0:-cold*MOD('warmth',1))*dt);
   let md=0.25;
   if(n.tea<15)md+=0.5; if(n.hunger<15)md+=0.4; if(n.warmth<15)md+=0.5;
   if(n.bladder>92)md+=0.4; if(n.energy<12)md+=0.35;
@@ -648,16 +912,19 @@ function simTick(dt){
     toast("OH NO","Too much tea, too few loo breaks. We shall never speak of the incident. The carpet remembers.","bad");
   }
 
-  S.hour+=dt*0.25;                          // 96s = 24h at 1x
+  S.hour+=dt*0.25;
   if(S.hour>=24){ S.hour-=24; newDay(); }
   S.evT-=dt;
   if(S.evT<=0){ S.evT=16+Math.random()*12; pickW(EVENTS).run(); }
 
   if(n.morale<=0) return gameOver("EMIGRATED",
     `${S.name}'s morale finally gave out. They've moved to Australia, where they now complain about the heat, the spiders, and — inexplicably — miss the queues.`);
-  if(S.money<=-500) return gameOver("OVERDRAWN",
+  if(S.money<=MOD('overdraft',-500)) return gameOver("OVERDRAWN",
     "The overdraft has achieved sentience and repossessed the sofa. "+S.name+" has moved back in with their mum, aged "+S.age+". The kettle survives.");
-  $("escapeBtn").style.display = S.money>=(S.irishPassport?999:2000) ? "block":"none";
+  const cost=escapeCost();
+  const eb=$("escapeBtn");
+  eb.style.display = S.money>=cost ? "block":"none";
+  eb.textContent = `✈️ FLEE — £${cost.toLocaleString()}${S.irishPassport?" (EU LANE)":""}`;
 }
 
 /* ============================================================
@@ -668,7 +935,7 @@ function charTick(dt){
     const [tx,ty]=C.path[0];
     const spd=2.6*dt;
     const dx=tx-C.x, dy=ty-C.y, dist=Math.hypot(dx,dy);
-    C.dir = Math.abs(dx)>Math.abs(dy) ? (dx>0?1:3) : (dy>0?2:0); // 0=N 1=E 2=S 3=W
+    C.dir = Math.abs(dx)>Math.abs(dy) ? (dx>0?1:3) : (dy>0?2:0);
     if(dist<=spd){ C.x=tx; C.y=ty; C.gx=tx; C.gy=ty; C.path.shift();
       if(!C.path.length && C.pending){ const p=C.pending; C.pending=null; p(); } }
     else { C.x+=dx/dist*spd; C.y+=dy/dist*spd; }
@@ -692,38 +959,15 @@ function drawChar(){
   let px, py, sitting=false;
   if(C.sitAt){ const p=iso(7.6,3.5); px=p.x; py=p.y-10; sitting=true; }
   else { const p=iso(C.x+0.5,C.y+0.5); px=p.x; py=p.y; }
-  // shadow
-  ctx.fillStyle="rgba(0,0,0,.18)"; ctx.beginPath(); ctx.ellipse(px,py-2,11,5,0,0,7); ctx.fill();
-  const bob=C.moving?Math.sin(C.phase)*1.5:0;
-  // legs
-  if(!sitting){
-    ctx.fillStyle="#39424e";
-    const sw=C.moving?Math.sin(C.phase)*3:0;
-    ctx.fillRect(px-6, py-14, 5, 12+sw*0.6);
-    ctx.fillRect(px+1, py-14, 5, 12-sw*0.6);
-  }
-  // body
-  ctx.fillStyle=C.jumper;
-  ctx.beginPath(); ctx.roundRect(px-9, py-32+bob-(sitting?-6:0), 18, 20, 6); ctx.fill();
-  // arms
-  ctx.fillStyle=shade(C.jumper,-18);
-  ctx.fillRect(px-11, py-30+bob, 4, 13); ctx.fillRect(px+7, py-30+bob, 4, 13);
-  // head
-  ctx.fillStyle=C.skin; ctx.beginPath(); ctx.arc(px, py-40+bob, 8.5, 0, 7); ctx.fill();
-  ctx.fillStyle=C.hair; ctx.beginPath(); ctx.arc(px, py-43+bob, 8.5, Math.PI, 2*Math.PI); ctx.fill();
-  if(C.dir!==0){ // face when not facing away
-    ctx.fillStyle="#222";
-    const fx=C.dir===1?2:C.dir===3?-2:0;
-    ctx.fillRect(px-3+fx, py-41+bob, 2, 2.6); ctx.fillRect(px+2+fx, py-41+bob, 2, 2.6);
-  }
+  drawSim(ctx,px,py,1,C.dir,S.look,{walk:C.moving,phase:C.phase,sitting,mood:S.needs.morale<25?'sad':''});
   // plumbob
   const avg=(S.needs.tea+S.needs.hunger+S.needs.warmth+S.needs.morale+S.needs.energy+(100-S.needs.bladder))/6;
   const col=avg>55?"#4cc25c":avg>28?"#e8b322":"#d9463c";
+  const bob=C.moving?Math.sin(C.phase)*1.5:0;
   const spin=Math.abs(Math.cos(perf*2.2))*7+1.5;
   ctx.fillStyle=col; ctx.strokeStyle="rgba(255,255,255,.7)";
   ctx.beginPath(); ctx.moveTo(px, py-66+bob); ctx.lineTo(px+spin, py-58+bob);
   ctx.lineTo(px, py-50+bob); ctx.lineTo(px-spin, py-58+bob); ctx.closePath(); ctx.fill(); ctx.stroke();
-  // action bubble + progress
   if(C.act && !C.act.hide) drawProgress(px, py-78+bob, C.act);
 }
 function drawProgress(px,py,act){
@@ -734,6 +978,7 @@ function drawProgress(px,py,act){
   ctx.fillStyle="#012169"; ctx.textAlign="center"; ctx.fillText(act.label, px, py-11);
   ctx.fillStyle="#d8d2c2"; ctx.fillRect(px-w/2, py, w, 5);
   ctx.fillStyle="#C8102E"; ctx.fillRect(px-w/2, py, w*frac, 5);
+  ctx.textAlign="start";
 }
 
 /* ============================================================
@@ -741,7 +986,7 @@ function drawProgress(px,py,act){
    ============================================================ */
 const particles=[];
 let rain=[];
-function initRain(){ rain=[]; const n=S.weather==="rain"?110:S.weather==="drizzle"?45:0;
+function initRain(){ rain=[]; const n=S&&S.weather==="rain"?110:S&&S.weather==="drizzle"?45:0;
   for(let i=0;i<n;i++) rain.push({x:Math.random()*2000-200, y:Math.random()*900, s:260+Math.random()*180}); }
 function drawParticles(dt){
   for(let i=particles.length-1;i>=0;i--){
@@ -751,22 +996,35 @@ function drawParticles(dt){
     if(p.type==='zzz'){ p.y+=p.vy*dt; p.x+=Math.sin(p.life*6)*0.6;
       ctx.fillStyle=`rgba(120,150,255,${Math.min(1,p.life)})`; ctx.font="bold 13px 'Segoe UI'"; ctx.fillText("z",p.x,p.y); }
     if(p.type==='txt'){ p.y+=p.vy*dt; ctx.globalAlpha=Math.min(1,p.life); ctx.fillStyle=p.col;
-      ctx.font="800 14px 'Segoe UI'"; ctx.textAlign="center"; ctx.fillText(p.txt,p.x,p.y); ctx.globalAlpha=1; }
+      ctx.font="800 14px 'Segoe UI'"; ctx.textAlign="center"; ctx.fillText(p.txt,p.x,p.y); ctx.globalAlpha=1; ctx.textAlign="start"; }
     if(p.type==='puddle'){ ctx.fillStyle=`rgba(220,190,60,${Math.min(0.5,p.life*0.12)})`;
       ctx.beginPath(); ctx.ellipse(p.x,p.y,13,6,0,0,7); ctx.fill(); }
   }
 }
 
 /* ============================================================
-   RENDER
+   VIEW (pan/zoom) & RENDER
    ============================================================ */
-let view={s:1,tx:0,ty:0};
+const view={z:1, sFit:1, s:1, tx:0, ty:0};
 function resize(){
   const r=$("stage").getBoundingClientRect(), dpr=window.devicePixelRatio||1;
   cv.width=Math.round(r.width*dpr); cv.height=Math.round(r.height*dpr);
-  const wW=(GW+GH)*TW+40, wH=(GW+GH)*TH+OY+60;
-  view.s=Math.min(r.width/wW, r.height/wH)*dpr;
-  view.tx=(cv.width-wW*view.s)/2; view.ty=(cv.height-wH*view.s)/2+8*view.s;
+  view.sFit=Math.min(cv.width/WORLD_W, cv.height/WORLD_H);
+  view.s=view.sFit*view.z;
+  view.tx=(cv.width-WORLD_W*view.s)/2; view.ty=(cv.height-WORLD_H*view.s)/2+8*view.s;
+  clampPan();
+}
+function clampPan(){
+  const sw=WORLD_W*view.s, sh=WORLD_H*view.s;
+  if(sw<=cv.width) view.tx=(cv.width-sw)/2; else view.tx=clamp(view.tx, cv.width-sw, 0);
+  if(sh<=cv.height) view.ty=(cv.height-sh)/2; else view.ty=clamp(view.ty, cv.height-sh, 0);
+}
+function zoomAt(mx,my,factor){
+  const nz=clamp(view.z*factor, 1, 3);
+  const wx=(mx-view.tx)/view.s, wy=(my-view.ty)/view.s;
+  view.z=nz; view.s=view.sFit*nz;
+  view.tx=mx-wx*view.s; view.ty=my-wy*view.s;
+  clampPan();
 }
 window.addEventListener("resize", resize);
 
@@ -775,28 +1033,23 @@ function render(dt){
   if(cv.width!==Math.round(r.width*dpr) || cv.height!==Math.round(r.height*dpr)) resize();
   ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,cv.width,cv.height);
   ctx.setTransform(view.s,0,0,view.s,view.tx,view.ty);
-  // floor
   for(let y=0;y<GH;y++) for(let x=0;x<GW;x++){
     const A=iso(x,y),B=iso(x+1,y),Cc=iso(x+1,y+1),D=iso(x,y+1);
     poly([A,B,Cc,D], FLOORS[roomAt(x,y)](x,y), false);
   }
-  // rug
   const rc=iso(8,2.4); ctx.fillStyle="#b3543e"; ctx.beginPath(); ctx.ellipse(rc.x,rc.y,52,24,0,0,7); ctx.fill();
   ctx.strokeStyle="#8f4232"; ctx.stroke();
-  // drawables sorted
   const dws=[];
   for(const w of walls) dws.push({k:w.gx+w.gy-0.45, f:()=>drawWallSeg(w)});
   for(const f of FURN) dws.push({k:f.anchor, f:f.draw});
-  dws.push({k:C.x+C.y+0.1, f:drawChar});
+  if(S) dws.push({k:C.x+C.y+0.1, f:drawChar});
   dws.sort((a,b)=>a.k-b.k);
   for(const d of dws) d.f();
-  // hidden-action progress over object
-  if(C.act && C.act.hide){
+  if(S && C.act && C.act.hide){
     const f=C.act.f, t=f.tiles[0]||f.use, p=iso(t[0]+0.5,t[1]+0.5);
     drawProgress(p.x, p.y-70, C.act);
   }
   drawParticles(dt);
-  // rain
   if(rain.length){
     ctx.strokeStyle="rgba(210,225,255,.38)"; ctx.lineWidth=1.2;
     for(const d of rain){
@@ -806,20 +1059,18 @@ function render(dt){
     }
     ctx.lineWidth=1;
   }
-  // day/night tint
-  const h=S.hour;
+  const h=S?S.hour:13;
   let dark=0;
   if(h<6) dark=0.42; else if(h<8) dark=0.42*(8-h)/2; else if(h>18) dark=Math.min(0.42, 0.42*(h-18)/4);
   if(dark>0){ ctx.setTransform(1,0,0,1,0,0); ctx.fillStyle=`rgba(8,14,50,${dark})`; ctx.fillRect(0,0,cv.width,cv.height); }
-  else if(S.weather==="sun"){ ctx.setTransform(1,0,0,1,0,0); ctx.fillStyle="rgba(255,220,90,.07)"; ctx.fillRect(0,0,cv.width,cv.height); }
+  else if(S&&S.weather==="sun"){ ctx.setTransform(1,0,0,1,0,0); ctx.fillStyle="rgba(255,220,90,.07)"; ctx.fillRect(0,0,cv.width,cv.height); }
 }
 function drawWallSeg(w){
   if(w.t==='ns') box(w.gx-0.07, w.gy, 0.14, 1, w.h, w.c);
   else box(w.gx, w.gy-0.07, 1, 0.14, w.h, w.c);
-  // windows on back wall
   if(w.t==='ew'&&w.gy===0&&(w.gx===2||w.gx===12)){
     const a=iso(w.gx+0.18,0), b=iso(w.gx+0.82,0);
-    const night=S.hour<6||S.hour>19;
+    const night=S?(S.hour<6||S.hour>19):false;
     poly([{x:a.x,y:a.y-72},{x:b.x,y:b.y-72},{x:b.x,y:b.y-34},{x:a.x,y:a.y-34}], night?'#1b2a55':'#a8c6d8', false);
     ctx.strokeStyle="rgba(255,255,255,.85)"; ctx.lineWidth=2;
     ctx.beginPath(); ctx.moveTo((a.x+b.x)/2,(a.y+b.y)/2-72); ctx.lineTo((a.x+b.x)/2,(a.y+b.y)/2-34); ctx.stroke(); ctx.lineWidth=1;
@@ -827,25 +1078,76 @@ function drawWallSeg(w){
 }
 
 /* ============================================================
-   INPUT
+   INPUT — pointer pan/zoom/tap (mouse + touch)
    ============================================================ */
-cv.addEventListener("click", e=>{
-  if(!S.running||S.over) return;
+const ptrs=new Map();
+let panState=null, pinchState=null;
+cv.addEventListener("pointerdown", e=>{
+  cv.setPointerCapture(e.pointerId);
+  ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptrs.size===1) panState={x0:e.clientX,y0:e.clientY,moved:false};
+  if(ptrs.size===2){
+    const [a,b]=[...ptrs.values()];
+    pinchState={d0:Math.hypot(a.x-b.x,a.y-b.y)};
+    panState=null;
+  }
+});
+cv.addEventListener("pointermove", e=>{
+  if(!ptrs.has(e.pointerId)) return;
+  const prev=ptrs.get(e.pointerId);
+  const dpr=window.devicePixelRatio||1;
+  if(ptrs.size===2 && pinchState){
+    ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    const [a,b]=[...ptrs.values()];
+    const d=Math.hypot(a.x-b.x,a.y-b.y);
+    if(d>0&&pinchState.d0>0){
+      const r=cv.getBoundingClientRect();
+      zoomAt(((a.x+b.x)/2-r.left)*dpr, ((a.y+b.y)/2-r.top)*dpr, d/pinchState.d0);
+      pinchState.d0=d;
+    }
+    return;
+  }
+  if(panState){
+    const dx=e.clientX-panState.x0, dy=e.clientY-panState.y0;
+    if(!panState.moved && Math.hypot(dx,dy)>12) panState.moved=true;
+    if(panState.moved){
+      view.tx+=(e.clientX-prev.x)*dpr; view.ty+=(e.clientY-prev.y)*dpr;
+      clampPan();
+    }
+  }
+  ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+});
+function ptrEnd(e){
+  if(!ptrs.has(e.pointerId)) return;
+  ptrs.delete(e.pointerId);
+  if(ptrs.size<2) pinchState=null;
+  if(ptrs.size===0){
+    if(panState && !panState.moved) handleTap(e.clientX, e.clientY);
+    panState=null;
+  }
+}
+cv.addEventListener("pointerup", ptrEnd);
+cv.addEventListener("pointercancel", ptrEnd);
+cv.addEventListener("wheel", e=>{
+  e.preventDefault();
   const r=cv.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
-  const mx=((e.clientX-r.left)*dpr-view.tx)/view.s, my=((e.clientY-r.top)*dpr-view.ty)/view.s;
-  // furniture hit (topmost = highest anchor)
+  zoomAt((e.clientX-r.left)*dpr,(e.clientY-r.top)*dpr, e.deltaY<0?1.15:0.87);
+},{passive:false});
+
+function handleTap(cx,cy){
+  if(!S||!S.running||S.over) return;
+  const r=cv.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+  const mx=((cx-r.left)*dpr-view.tx)/view.s, my=((cy-r.top)*dpr-view.ty)/view.s;
   let hit=null;
   for(const f of FURN) if(MENUS[f.id] && mx>=f.hb.x0&&mx<=f.hb.x1&&my>=f.hb.y0&&my<=f.hb.y1)
     if(!hit||f.anchor>hit.anchor) hit=f;
-  if(hit){ openMenu(hit, e.clientX-r.left, e.clientY-r.top); return; }
+  if(hit){ openMenu(hit, cx-r.left, cy-r.top); return; }
   closeMenu();
-  // floor click → walk
   const tx=Math.floor(((mx-OX)/TW + (my-OY)/TH)/2), ty=Math.floor(((my-OY)/TH - (mx-OX)/TW)/2);
   if(tx>=0&&ty>=0&&tx<GW&&ty<GH&&!blocked.has(tx+","+ty)&&!C.busy) walkTo(tx,ty);
-});
+}
 document.addEventListener("click", e=>{ if(!e.target.closest("#pie")&&e.target.tagName!=="CANVAS") closeMenu(); });
 
-/* speed controls */
 const SPEEDS=[0,1,2.5,5];
 for(let i=0;i<4;i++) $("sp"+i).addEventListener("click",()=>{
   S.speed=SPEEDS[i];
@@ -891,20 +1193,104 @@ function statsBlock(){
 function gameOver(title,text){
   if(S.over) return; S.over=true;
   $("overlayCard").innerHTML=`<h1>${title}</h1><div class="sub">Rule Britannia, etc.</div><p>${text}</p>${statsBlock()}`+
-    `<button onclick="startGame()">HAVE ANOTHER GO 🫖</button>`+
+    `<button class="bigbtn" onclick="showCAS()">HAVE ANOTHER GO 🫖</button>`+
     `<div class="small">The inquiry into what went wrong will report in 2043.</div>`;
   $("overlay").style.display="flex";
 }
 function winGame(){
-  if(S.over) return; S.over=true; S.money-=S.irishPassport?999:1999;
+  if(S.over) return; S.over=true; S.money-=escapeCost();
   $("overlayCard").innerHTML=`<h1>ESCAPED! <span>✈️</span></h1>`+
     `<div class="sub">${S.irishPassport?"Straight through the EU lane, waving the burgundy book like a lottery ticket.":"One-way to Lisbon. 90 days at a time, obviously. There are rules now."}</div>`+
     `<p>${S.name} has fled to the Continent, where they will spend the rest of their days enjoying functioning trains, affordable cheese, and telling everyone how much they miss Greggs.</p>${statsBlock()}`+
-    `<button onclick="startGame()">START AGAIN, YOU MASOCHIST 🇬🇧</button>`+
+    `<button class="bigbtn" onclick="showCAS()">CREATE ANOTHER BRIT 🇬🇧</button>`+
     `<div class="small">You still think about the queues. The beautiful, beautiful queues.</div>`;
   $("overlay").style.display="flex";
 }
 $("escapeBtn").addEventListener("click",winGame);
+
+/* ============================================================
+   CREATE-A-BRIT UI
+   ============================================================ */
+const casCv=$("casCv"), casCtx=casCv.getContext("2d");
+function buildSwatches(){
+  const mk=(id, items, get, set, colour)=>{
+    const el=$(id); el.innerHTML="";
+    for(const it of items){
+      const b=document.createElement("button");
+      b.className="sw"+(colour?"":" wide");
+      if(colour){ b.style.background=it; b.title=it; }
+      else b.textContent=it.l;
+      const val=colour?it:it.id;
+      if(get()===val) b.classList.add("sel");
+      b.onclick=()=>{ set(val); buildSwatches(); };
+      el.appendChild(b);
+    }
+  };
+  mk("swSkin", SKINS, ()=>LOOK.skin, v=>LOOK.skin=v, true);
+  mk("swHairCol", HAIRCOLS, ()=>LOOK.hair, v=>LOOK.hair=v, true);
+  mk("swHairStyle", HAIRSTYLES, ()=>LOOK.hairStyle, v=>LOOK.hairStyle=v, false);
+  mk("swTop", TOPS, ()=>LOOK.top, v=>LOOK.top=v, false);
+  mk("swTopCol", TOPCOLS, ()=>LOOK.topCol, v=>LOOK.topCol=v, true);
+  mk("swTrou", TROUCOLS, ()=>LOOK.trouCol, v=>LOOK.trouCol=v, true);
+  mk("swGlasses", GLASSES, ()=>LOOK.glasses, v=>LOOK.glasses=v, false);
+}
+function buildArchCards(){
+  const row=$("archRow"); row.innerHTML="";
+  for(const a of ARCH){
+    const d=document.createElement("div");
+    d.className="archCard"+(CAS.arch===a?" sel":"");
+    d.innerHTML=`<div class="an">${a.name}</div><div class="ad">${a.desc}</div><div class="am">${a.lines.join("<br>")}</div>`;
+    d.onclick=()=>{ CAS.arch=a; Object.assign(LOOK, a.preset); $("archTag").textContent=a.tag; buildArchCards(); buildSwatches(); };
+    row.appendChild(d);
+  }
+}
+function randomLook(){
+  LOOK={ skin:pick(SKINS), hairStyle:pick(HAIRSTYLES).id, hair:pick(HAIRCOLS),
+    top:pick(TOPS).id, topCol:pick(TOPCOLS), trouCol:pick(TROUCOLS), glasses:pick(GLASSES).id };
+}
+function renderCAS(){
+  const dpr=window.devicePixelRatio||1;
+  const r=casCv.getBoundingClientRect();
+  if(r.width===0) return;
+  if(casCv.width!==Math.round(r.width*dpr)){ casCv.width=Math.round(r.width*dpr); casCv.height=Math.round(r.height*dpr); }
+  const g=casCtx, W=casCv.width, H=casCv.height;
+  g.setTransform(1,0,0,1,0,0); g.clearRect(0,0,W,H);
+  if(!CAS.drag) CAS.theta+=0.014;
+  // floor disc
+  g.fillStyle="rgba(0,0,0,.3)";
+  g.beginPath(); g.ellipse(W/2,H*0.86,W*0.3,H*0.05,0,0,7); g.fill();
+  const facing=((Math.round(CAS.theta/(Math.PI/2))%4)+4)%4;
+  drawSim(g, W/2, H*0.85, Math.min(W/68,H/82), facing, LOOK, {});
+  // plumbob
+  const spin=Math.abs(Math.cos(CAS.theta*2))*20+4;
+  g.fillStyle="#4cc25c"; g.strokeStyle="rgba(255,255,255,.7)"; g.lineWidth=2;
+  const bx=W/2, byy=H*0.85-Math.min(W/68,H/82)*66;
+  g.beginPath(); g.moveTo(bx,byy-22); g.lineTo(bx+spin,byy); g.lineTo(bx,byy+22); g.lineTo(bx-spin,byy); g.closePath(); g.fill(); g.stroke();
+  g.lineWidth=1;
+}
+casCv.addEventListener("pointerdown", e=>{ CAS.drag={x:e.clientX, t0:CAS.theta}; casCv.setPointerCapture(e.pointerId); });
+casCv.addEventListener("pointermove", e=>{ if(CAS.drag) CAS.theta=CAS.drag.t0+(e.clientX-CAS.drag.x)*0.02; });
+casCv.addEventListener("pointerup", ()=>CAS.drag=null);
+casCv.addEventListener("pointercancel", ()=>CAS.drag=null);
+
+$("nameDice").addEventListener("click", ()=>{ CAS.name=pick(NAMES); $("nameIn").value=CAS.name; });
+$("nameIn").addEventListener("input", e=>CAS.name=e.target.value||pick(NAMES));
+$("ageIn").addEventListener("input", e=>{ CAS.age=+e.target.value; $("ageVal").textContent=CAS.age; });
+$("randAll").addEventListener("click", ()=>{
+  CAS.arch=pick(ARCH); randomLook();
+  CAS.name=pick(NAMES); CAS.age=18+Math.floor(Math.random()*70);
+  $("nameIn").value=CAS.name; $("ageIn").value=CAS.age; $("ageVal").textContent=CAS.age;
+  $("archTag").textContent=CAS.arch.tag;
+  buildArchCards(); buildSwatches();
+});
+function showCAS(){
+  $("overlay").style.display="none";
+  $("cas").classList.add("open");
+  $("nameIn").value=CAS.name; $("ageIn").value=CAS.age; $("ageVal").textContent=CAS.age;
+  $("archTag").textContent=CAS.arch.tag;
+  buildArchCards(); buildSwatches();
+}
+window.showCAS=showCAS;
 
 /* ============================================================
    MAIN LOOP & BOOT
@@ -915,7 +1301,6 @@ function step(raw){
   const dt=raw*S.speed;
   if(dt>0){ simTick(dt); if(!S.over) charTick(dt); }
 }
-/* simulation clock — setInterval so the game survives a backgrounded tab */
 let lastMs=performance.now();
 setInterval(()=>{
   const now=performance.now(), raw=Math.min(0.1,(now-lastMs)/1000);
@@ -923,42 +1308,41 @@ setInterval(()=>{
   step(raw);
   if(S && S.running) renderUI();
 }, 50);
-/* render clock — rAF, visuals only */
 let last=0;
 function frame(ts){
   const raw=Math.min(0.05,(ts-last)/1000||0.016); last=ts; perf+=raw;
-  if(S) render(raw*(S.speed||1));
+  if($("cas").classList.contains("open")) renderCAS();
+  render(raw*((S&&S.speed)||1));
   requestAnimationFrame(frame);
 }
-function startGame(){
-  S=freshState();
+
+function beginLife(){
+  $("cas").classList.remove("open");
+  S=freshState(CAS.arch);
   C.gx=8; C.gy=4; C.x=8; C.y=4; C.path=[]; C.busy=false; C.act=null; C.pending=null; C.hidden=false; C.sitAt=null;
-  C.jumper=pick(["#b8422f","#3a63b0","#4a7a43","#7a4a8c","#8c6b3a"]);
-  C.skin=pick(["#e8b48c","#c98e63","#8c5a3a","#f0c8a0"]);
-  C.hair=pick(["#5a3a22","#2c2c2c","#b0b0b0","#8c6b3a","#c25a2a"]);
   particles.length=0;
   S.running=true; S.speed=1;
   for(let j=0;j<4;j++) $("sp"+j).classList.toggle("on",j===1);
   $("overlay").style.display="none";
   $("escapeBtn").style.display="none";
-  $("escapeBtn").textContent="✈️ BOOK ONE-WAY FLIGHT — £1,999";
   $("toasts").innerHTML="";
-  setWeather("rain"); initRain();
+  view.z=1; resize();
+  setWeather("rain");
   renderUI();
-  toast("WELCOME HOME",`This is ${S.name}, ${S.age}. It's raining. The bills are due. The kettle awaits. They've never felt more alive.`,"good");
-  toast("HOW TO PLAY","Click objects for options. Click the floor to wander. Mind the bladder — the tea has to go somewhere.","");
+  toast("WELCOME HOME",`This is ${S.name}, ${S.age} — ${S.arch.name}. It's raining. The bills are due. The kettle awaits. They've never felt more alive.`,"good");
+  toast("HOW TO PLAY","Tap objects for options. Tap the floor to wander. Drag to pan, pinch to zoom. Mind the bladder.","");
 }
-window.startGame=startGame;
-window.G={ get S(){return S;}, C, FURN, MENUS, startAction, walkTo,
+$("beginBtn").addEventListener("click", beginLife);
+$("startBtn").addEventListener("click", showCAS);
+
+window.G={ get S(){return S;}, C, FURN, MENUS, ARCH, CAS, LOOK, startAction, walkTo, beginLife, showCAS, renderCAS,
+  setArch(id){ CAS.arch=ARCH.find(a=>a.id===id); Object.assign(LOOK, CAS.arch.preset); },
   use(id,opt=0){ const f=FURN.find(f=>f.id===id); startAction(f, MENUS[id][opt]); },
   step(t){ const n=Math.ceil(t/0.05); for(let i=0;i<n;i++){ perf+=0.05; step(0.05); } renderUI(); render(0.05); } };
 
-$("startBtn").addEventListener("click",startGame);
 $("tickertext").textContent="  "+HEADLINES.sort(()=>Math.random()-0.5).join("   •••   ")+"   •••";
-const _oldSetWeather=setWeather;
-setWeather=function(w){ _oldSetWeather(w); initRain(); };
 resize();
-S=freshState(); render(0.016);
+render(0.016);
 requestAnimationFrame(frame);
 </script>
 </body>
