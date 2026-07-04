@@ -5,7 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#012169">
 <title>BRITS™ — A Life Simulation of a Plucky Island Nation</title>
-<!-- v3.0 create-a-brit + mobile -->
+<!-- v4.0 real-3D create-a-brit -->
+<script type="importmap">
+{ "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.182.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.182.0/examples/jsm/"
+} }
+</script>
 <style>
   :root{
     --navy:#012169; --navy2:#0a3180; --red:#C8102E; --cream:#f4efe6;
@@ -121,8 +127,10 @@
   #cas .sub{font-style:italic; color:#cdd6ea; text-align:center; font-size:12px; margin-bottom:12px;}
   #casWrap{display:flex; gap:18px; align-items:flex-start;}
   #casLeft{flex:none; width:250px; display:flex; flex-direction:column; gap:8px; align-items:center;}
-  #casCv{width:250px; height:300px; background:radial-gradient(circle at 50% 30%, #2b4a9e, #0a1c48 80%);
+  #casCv, #cas3d{width:250px; height:300px; background:radial-gradient(circle at 50% 30%, #2b4a9e, #0a1c48 80%);
     border-radius:14px; border:3px solid #4a6bc4; touch-action:none; cursor:grab;}
+  #cas3d{display:none; overflow:hidden;}
+  #cas3d canvas{width:100% !important; height:100% !important; display:block; touch-action:none;}
   #archTag{font-size:11.5px; color:#ffd34d; font-style:italic; text-align:center; min-height:30px; line-height:1.4; padding:0 4px;}
   #spinHint{font-size:10px; color:#9db4e8;}
   #casRight{flex:1; min-width:0; display:flex; flex-direction:column; gap:10px;}
@@ -178,7 +186,7 @@
     #overlay h1{font-size:34px;}
     #casWrap{flex-direction:column; align-items:center;}
     #casLeft{width:100%;}
-    #casCv{width:180px; height:210px;}
+    #casCv, #cas3d{width:180px; height:210px;}
     #archRow{grid-template-columns:repeat(2,1fr);}
     #casCard{padding:10px 10px 20px;}
     .casLbl{width:64px; font-size:9.5px;}
@@ -254,6 +262,7 @@
     <div id="casWrap">
       <div id="casLeft">
         <canvas id="casCv"></canvas>
+        <div id="cas3d"></div>
         <div id="spinHint">⟲ drag to rotate</div>
         <div id="archTag"></div>
       </div>
@@ -272,6 +281,10 @@
         <div class="casRow"><span class="casLbl">TOP COL</span><div class="swatches" id="swTopCol"></div></div>
         <div class="casRow"><span class="casLbl">TROUSERS</span><div class="swatches" id="swTrou"></div></div>
         <div class="casRow"><span class="casLbl">EYEWEAR</span><div class="swatches" id="swGlasses"></div></div>
+        <div class="casRow"><span class="casLbl">BUILD</span>
+          <input type="range" id="buildIn" min="0" max="100" value="35" style="accent-color:var(--red); width:140px;">
+          <span id="buildVal" style="font-size:11px; font-weight:700; color:#cfe0ff;">Regular</span>
+        </div>
         <div id="casBtns">
           <button class="dice" id="randAll" style="font-size:13px; font-weight:800;">🎲 RANDOMISE</button>
           <button class="bigbtn" id="beginBtn">START LIFE 🫖</button>
@@ -380,35 +393,36 @@ const ARCH=[
     desc:'Radiates heat and grievance in equal measure. The news is his cardio.',
     mods:{news:+8, warmth:0.7, pub:1.25},
     lines:['<span class="plus">+ The news makes him STRONGER</span>','<span class="plus">+ Runs hot — warmth lasts longer</span>','<span class="minus">− Always gets the rounds in (pub +25%)</span>'],
-    preset:{skin:'#e8988a', hairStyle:'bald', hair:'#b0b0b0', top:'polo', topCol:'#476072', trouCol:'#5a4632', glasses:'none'}},
+    preset:{skin:'#e8988a', hairStyle:'bald', hair:'#b0b0b0', top:'polo', topCol:'#476072', trouCol:'#5a4632', glasses:'none', build:85}},
   {id:'gent', name:'The Landed Gent', tag:'"One doesn\'t discuss money. One simply has none left."',
     desc:'Asset rich, cash poor, morally flexible. The east wing is closed for winter.',
     mods:{startMoney:900, wage:0.35, bills:1.25, rainImmune:true},
     lines:['<span class="plus">+ Starts with £900 (the trust)</span>','<span class="plus">+ Simply does not notice weather</span>','<span class="minus">− Allowance wages, bills +25%</span>'],
-    preset:{skin:'#f0c8a0', hairStyle:'cap', hair:'#b0b0b0', top:'wax', topCol:'#4a7a43', trouCol:'#a33434', glasses:'none'}},
+    preset:{skin:'#f0c8a0', hairStyle:'cap', hair:'#b0b0b0', top:'wax', topCol:'#4a7a43', trouCol:'#a33434', glasses:'none', build:55}},
   {id:'liberal', name:'The Islington Liberal', tag:'"I\'m basically European. I have a bike."',
     desc:'Grieves nightly over a sourdough starter. Has an Irish granny on standby.',
     mods:{tea:0.8, news:-5, irishCost:45, irishDays:1},
     lines:['<span class="plus">+ Irish granny pre-located (fast, cheap passport)</span>','<span class="plus">+ Numb to the news by now</span>','<span class="minus">− Oat milk: tea 20% weaker</span>'],
-    preset:{skin:'#e8b48c', hairStyle:'bun', hair:'#5a3a22', top:'cardigan', topCol:'#c9a227', trouCol:'#274060', glasses:'round'}},
+    preset:{skin:'#e8b48c', hairStyle:'bun', hair:'#5a3a22', top:'cardigan', topCol:'#c9a227', trouCol:'#274060', glasses:'round', build:22}},
   {id:'nan', name:'Northern Nan', tag:'"Put a cardie on, you\'ll be fine."',
     desc:'Survived rationing, eleven recessions and your nonsense. Runs on tea and spite.',
     mods:{tea:1.5, warmth:0.6, wage:0.6, sticker:6},
     lines:['<span class="plus">+ Tea is 50% stronger</span>','<span class="plus">+ Made of sterner stuff (slow warmth loss)</span>','<span class="plus">+ Yellow-sticker royalty</span>','<span class="minus">− Pension wages</span>'],
-    preset:{skin:'#f0c8a0', hairStyle:'perm', hair:'#b0b0b0', top:'cardigan', topCol:'#7a4a8c', trouCol:'#707070', glasses:'round'}},
+    preset:{skin:'#f0c8a0', hairStyle:'perm', hair:'#b0b0b0', top:'cardigan', topCol:'#7a4a8c', trouCol:'#707070', glasses:'round', build:45}},
   {id:'vanman', name:'White Van Man', tag:'"Can\'t park there, mate."',
     desc:'The backbone of the nation, doing 58 in the middle lane with a flask of builder\'s.',
     mods:{wage:1.3, teaDecay:0.8, pothole:2},
     lines:['<span class="plus">+ Wages +30%</span>','<span class="plus">+ Flask on board (tea lasts longer)</span>','<span class="minus">− Potholes eat the van (2× damage)</span>'],
-    preset:{skin:'#e8b48c', hairStyle:'short', hair:'#2c2c2c', top:'hivis', topCol:'#c9a227', trouCol:'#39424e', glasses:'sunnies'}},
+    preset:{skin:'#e8b48c', hairStyle:'short', hair:'#2c2c2c', top:'hivis', topCol:'#c9a227', trouCol:'#39424e', glasses:'sunnies', build:70}},
   {id:'student', name:'The Student', tag:'"It\'s not a phase, it\'s a deferred career."',
     desc:'Nocturnal, overdrawn, and powered entirely by beans. Owns one saucepan.',
     mods:{startMoney:60, bills:0.6, energy:1.4, beans:1.6, overdraft:-800, escape:1500},
     lines:['<span class="plus">+ Cheap digs, deep overdraft (−£800)</span>','<span class="plus">+ Beans are a food group</span>','<span class="plus">+ Travels light (escape £1,500)</span>','<span class="minus">− Nocturnal (energy drains fast)</span>'],
-    preset:{skin:'#c98e63', hairStyle:'beanie', hair:'#2c2c2c', top:'hoodie', topCol:'#3a63b0', trouCol:'#39424e', glasses:'none'}},
+    preset:{skin:'#c98e63', hairStyle:'beanie', hair:'#2c2c2c', top:'hoodie', topCol:'#3a63b0', trouCol:'#39424e', glasses:'none', build:15}},
 ];
 
-let LOOK={ skin:SKINS[1], hairStyle:'short', hair:'#5a3a22', top:'jumper', topCol:'#b8422f', trouCol:'#39424e', glasses:'none' };
+let LOOK={ skin:SKINS[1], hairStyle:'short', hair:'#5a3a22', top:'jumper', topCol:'#b8422f', trouCol:'#39424e', glasses:'none', build:35 };
+function cas3dRefresh(){ if(window.CAS3D&&window.CAS3D.ready) window.CAS3D.refresh(); }
 let CAS={ name:pick(NAMES), age:47, arch:ARCH[0], theta:2.2, drag:null };
 
 /* ---- the shared character renderer (game + CAS turntable) ---- */
@@ -430,12 +444,13 @@ function drawSim(g,px,py,sc,facing,look,o={}){
   const by=-32+bob+(sit?6:0);       // body top y
   // hoodie hood behind head (back view: big hood)
   if(look.top==='hoodie'&&back){ g.fillStyle=shade(look.topCol,-24); g.beginPath(); g.arc(0,-40+bob,9.5,0,7); g.fill(); }
-  // body
+  // body (width scales with build)
+  const bw=18+((look.build??35)/100)*8;
   const bodyCol = look.top==='hivis' ? '#f5c518' : look.top==='lions' ? '#f2f2f2' : look.topCol;
   g.fillStyle=bodyCol;
-  g.beginPath(); g.roundRect(-9,by,18,20,6); g.fill();
+  g.beginPath(); g.roundRect(-bw/2,by,bw,20,6); g.fill();
   // top details
-  if(look.top==='hivis'){ g.fillStyle='#c8c8c8'; g.fillRect(-9,by+8,18,3.5); g.fillStyle='#f57f17'; g.fillRect(-9,by+15,18,5); }
+  if(look.top==='hivis'){ g.fillStyle='#c8c8c8'; g.fillRect(-bw/2,by+8,bw,3.5); g.fillStyle='#f57f17'; g.fillRect(-bw/2,by+15,bw,5); }
   if(look.top==='wax'){ g.fillStyle=shade(bodyCol,-20); g.fillRect(-7,by+11,5,6); g.fillRect(2,by+11,5,6); g.fillRect(-9,by,18,3); }
   if(look.top==='cardigan'&&!back){ g.strokeStyle=shade(bodyCol,-35); g.beginPath(); g.moveTo(0,by+2); g.lineTo(0,by+18); g.stroke();
     g.fillStyle=shade(bodyCol,-35); g.fillRect(-1.2,by+6,2.4,2); g.fillRect(-1.2,by+11,2.4,2); }
@@ -444,7 +459,7 @@ function drawSim(g,px,py,sc,facing,look,o={}){
   if(look.top==='hoodie'&&!back){ g.strokeStyle=shade(bodyCol,-28); g.beginPath(); g.moveTo(-3,by+3); g.lineTo(-3,by+9); g.moveTo(3,by+3); g.lineTo(3,by+9); g.stroke(); }
   // arms
   g.fillStyle=shade(bodyCol,-18);
-  g.fillRect(-11,by+2,4,13); g.fillRect(7,by+2,4,13);
+  g.fillRect(-bw/2-2,by+2,4,13); g.fillRect(bw/2-2,by+2,4,13);
   // head
   const hy=-40+bob+(sit?6:0);
   g.fillStyle=look.skin; g.beginPath(); g.arc(0,hy,8.5,0,7); g.fill();
@@ -1222,7 +1237,7 @@ function buildSwatches(){
       else b.textContent=it.l;
       const val=colour?it:it.id;
       if(get()===val) b.classList.add("sel");
-      b.onclick=()=>{ set(val); buildSwatches(); };
+      b.onclick=()=>{ set(val); buildSwatches(); cas3dRefresh(); };
       el.appendChild(b);
     }
   };
@@ -1240,13 +1255,20 @@ function buildArchCards(){
     const d=document.createElement("div");
     d.className="archCard"+(CAS.arch===a?" sel":"");
     d.innerHTML=`<div class="an">${a.name}</div><div class="ad">${a.desc}</div><div class="am">${a.lines.join("<br>")}</div>`;
-    d.onclick=()=>{ CAS.arch=a; Object.assign(LOOK, a.preset); $("archTag").textContent=a.tag; buildArchCards(); buildSwatches(); };
+    d.onclick=()=>{ CAS.arch=a; Object.assign(LOOK, a.preset); $("archTag").textContent=a.tag; buildArchCards(); buildSwatches(); syncBuildUI(); cas3dRefresh(); };
     row.appendChild(d);
   }
 }
 function randomLook(){
   LOOK={ skin:pick(SKINS), hairStyle:pick(HAIRSTYLES).id, hair:pick(HAIRCOLS),
-    top:pick(TOPS).id, topCol:pick(TOPCOLS), trouCol:pick(TROUCOLS), glasses:pick(GLASSES).id };
+    top:pick(TOPS).id, topCol:pick(TOPCOLS), trouCol:pick(TROUCOLS), glasses:pick(GLASSES).id,
+    build:Math.floor(Math.random()*101) };
+  syncBuildUI();
+}
+const BUILD_NAMES=[[20,'Racing snake'],[45,'Regular'],[70,'Sturdy'],[90,'Pub build'],[101,'Full English']];
+function syncBuildUI(){
+  $("buildIn").value=LOOK.build??35;
+  $("buildVal").textContent=BUILD_NAMES.find(b=>(LOOK.build??35)<b[0])[1];
 }
 function renderCAS(){
   const dpr=window.devicePixelRatio||1;
@@ -1281,14 +1303,15 @@ $("randAll").addEventListener("click", ()=>{
   CAS.name=pick(NAMES); CAS.age=18+Math.floor(Math.random()*70);
   $("nameIn").value=CAS.name; $("ageIn").value=CAS.age; $("ageVal").textContent=CAS.age;
   $("archTag").textContent=CAS.arch.tag;
-  buildArchCards(); buildSwatches();
+  buildArchCards(); buildSwatches(); cas3dRefresh();
 });
+$("buildIn").addEventListener("input", e=>{ LOOK.build=+e.target.value; syncBuildUI(); cas3dRefresh(); });
 function showCAS(){
   $("overlay").style.display="none";
   $("cas").classList.add("open");
   $("nameIn").value=CAS.name; $("ageIn").value=CAS.age; $("ageVal").textContent=CAS.age;
   $("archTag").textContent=CAS.arch.tag;
-  buildArchCards(); buildSwatches();
+  buildArchCards(); buildSwatches(); syncBuildUI(); cas3dRefresh();
 }
 window.showCAS=showCAS;
 
@@ -1311,7 +1334,7 @@ setInterval(()=>{
 let last=0;
 function frame(ts){
   const raw=Math.min(0.05,(ts-last)/1000||0.016); last=ts; perf+=raw;
-  if($("cas").classList.contains("open")) renderCAS();
+  if($("cas").classList.contains("open") && !(window.CAS3D&&window.CAS3D.ready)) renderCAS();
   render(raw*((S&&S.speed)||1));
   requestAnimationFrame(frame);
 }
@@ -1344,6 +1367,247 @@ $("tickertext").textContent="  "+HEADLINES.sort(()=>Math.random()-0.5).join("   
 resize();
 render(0.016);
 requestAnimationFrame(frame);
+</script>
+
+<script type="module">
+/* ============================================================
+   BRITS™ 3D Create-a-Brit preview (three.js). Falls back to the
+   2D canvas turntable if the CDN or WebGL is unavailable.
+   ============================================================ */
+(async ()=>{
+try{
+  const THREE = await import('three');
+  const {OrbitControls} = await import('three/addons/controls/OrbitControls.js');
+
+  const holder=document.getElementById('cas3d');
+  const renderer=new THREE.WebGLRenderer({antialias:true, alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+  renderer.shadowMap.enabled=true;
+  renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  holder.appendChild(renderer.domElement);
+
+  const scene=new THREE.Scene();
+  const cam=new THREE.PerspectiveCamera(32,250/300,0.1,50);
+  cam.position.set(0.4,1.6,4.4);
+  const controls=new OrbitControls(cam,renderer.domElement);
+  controls.target.set(0,0.95,0);
+  controls.enablePan=false; controls.minDistance=2.4; controls.maxDistance=7;
+  controls.minPolarAngle=0.7; controls.maxPolarAngle=1.72;
+  controls.autoRotate=true; controls.autoRotateSpeed=2.4;
+  controls.enableDamping=true; controls.dampingFactor=0.08;
+
+  scene.add(new THREE.HemisphereLight(0xdfe8ff,0x2a3a66,1.25));
+  const dir=new THREE.DirectionalLight(0xfff4e0,1.9);
+  dir.position.set(2.5,4.5,2.2); dir.castShadow=true;
+  dir.shadow.mapSize.set(1024,1024);
+  Object.assign(dir.shadow.camera,{left:-1.6,right:1.6,top:2.6,bottom:-0.4,near:1,far:12});
+  dir.shadow.camera.updateProjectionMatrix();
+  scene.add(dir);
+
+  // pedestal + shadow catcher
+  const ped=new THREE.Mesh(new THREE.CylinderGeometry(0.95,1.08,0.12,48),
+    new THREE.MeshStandardMaterial({color:0x16307a,roughness:0.65}));
+  ped.position.y=-0.06; scene.add(ped);
+  const rim=new THREE.Mesh(new THREE.TorusGeometry(0.95,0.022,10,64),
+    new THREE.MeshStandardMaterial({color:0xC8102E,roughness:0.5}));
+  rim.rotation.x=Math.PI/2; rim.position.y=0.0; scene.add(rim);
+  const catcher=new THREE.Mesh(new THREE.CircleGeometry(0.95,48), new THREE.ShadowMaterial({opacity:0.32}));
+  catcher.rotation.x=-Math.PI/2; catcher.position.y=0.002; catcher.receiveShadow=true; scene.add(catcher);
+
+  /* helpers */
+  const M=(c,r=0.85)=>new THREE.MeshStandardMaterial({color:new THREE.Color(c),roughness:r,metalness:0.04});
+  function mesh(geo,mat,x=0,y=0,z=0){ const m=new THREE.Mesh(geo,mat); m.position.set(x,y,z); m.castShadow=true; return m; }
+  const cap=(r,h,mat,x,y,z)=>mesh(new THREE.CapsuleGeometry(r,h,6,18),mat,x,y,z);
+  const sph=(r,mat,x,y,z)=>mesh(new THREE.SphereGeometry(r,20,14),mat,x,y,z);
+  const cyl=(rt,rb,h,mat,x,y,z,seg=24)=>mesh(new THREE.CylinderGeometry(rt,rb,h,seg),mat,x,y,z);
+  const bx=(w,h,d,mat,x,y,z)=>mesh(new THREE.BoxGeometry(w,h,d),mat,x,y,z);
+  const tor=(r,t,mat,x,y,z,arc=Math.PI*2)=>mesh(new THREE.TorusGeometry(r,t,10,40,arc),mat,x,y,z);
+
+  let brit=null, parts={};
+  function disposeBrit(){
+    if(!brit) return;
+    scene.remove(brit);
+    brit.traverse(o=>{ if(o.geometry) o.geometry.dispose();
+      if(o.material)(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.dispose()); });
+    brit=null;
+  }
+
+  function buildBrit(){
+    disposeBrit();
+    const L=LOOK, archId=(CAS&&CAS.arch)?CAS.arch.id:'gammon';
+    const b=(L.build??35)/100;
+    const bw=1+b*0.5;                       // torso girth factor
+    brit=new THREE.Group(); parts={};
+
+    const skinM=M(L.skin), hairM=M(L.hair,0.95), trouM=M(L.trouCol,0.95), darkM=M('#23232b',0.6);
+    const topBase = L.top==='hivis' ? '#f5c518' : L.top==='lions' ? '#f2f2f2' : L.topCol;
+    const topM=M(topBase,0.92);
+
+    // shoes + legs
+    for(const s of [-1,1]){
+      const shoe=bx(0.17,0.09,0.28,M('#3a2f28',0.7),0.145*s,0.045,0.035);
+      brit.add(shoe, cap(0.105,0.34,trouM,0.145*s,0.48,0));
+    }
+    // torso
+    const torso=new THREE.Group(); torso.position.y=1.02;
+    const body=cap(0.30,0.40,topM,0,0,0);
+    body.scale.set(bw,1,0.88*bw);
+    torso.add(body);
+    if(L.top==='hivis'){
+      const b1=cyl(0.312,0.312,0.055,M('#c8c8c8',0.6),0,0.05,0); b1.scale.set(bw,1,0.88*bw);
+      const b2=cyl(0.312,0.312,0.075,M('#f57f17',0.7),0,-0.14,0); b2.scale.set(bw,1,0.88*bw);
+      torso.add(b1,b2);
+    }
+    if(L.top==='wax'){
+      torso.add(bx(0.13,0.10,0.03,M(topBase===L.topCol?'#39412f':'#39412f',0.95),-0.13*bw,-0.16,0.27*bw),
+                bx(0.13,0.10,0.03,M('#39412f',0.95),0.13*bw,-0.16,0.27*bw));
+      const col=tor(0.17*bw,0.04,M('#5a4632',0.9),0,0.46,0,Math.PI*1.4);
+      col.rotation.x=Math.PI/2; col.rotation.z=Math.PI*0.8; torso.add(col);
+    }
+    if(L.top==='cardigan'){
+      for(let i=0;i<3;i++) torso.add(sph(0.024,M('#3a3a3a',0.5),0,0.12-i*0.12,0.295*bw));
+    }
+    if(L.top==='polo'){
+      const col=cyl(0.13*bw,0.20*bw,0.075,M('#f2f2f2',0.9),0,0.46,0); torso.add(col);
+    }
+    if(L.top==='lions'){
+      const badge=cyl(0.045,0.045,0.012,M('#1c3aa0',0.6),-0.12*bw,0.14,0.29*bw);
+      badge.rotation.x=Math.PI/2; torso.add(badge);
+    }
+    if(L.top==='hoodie'){
+      const hood=tor(0.17,0.075,M(topBase,0.95),0,0.30,-0.14,Math.PI);
+      hood.rotation.x=-0.5; torso.add(hood);
+      torso.add(cyl(0.008,0.008,0.14,M('#e8e2d2',0.8),-0.06,0.14,0.30*bw),
+                cyl(0.008,0.008,0.14,M('#e8e2d2',0.8),0.06,0.14,0.30*bw));
+    }
+    brit.add(torso);
+
+    // arms (pivot at shoulder so they can sway)
+    const shoulder=0.30*bw+0.06;
+    for(const s of [-1,1]){
+      const arm=new THREE.Group(); arm.position.set(shoulder*s,1.34,0);
+      arm.rotation.z=0.16*s;
+      const sleeve=cap(0.085,0.30,topM,0,-0.20,0);
+      const hand=sph(0.082,skinM,0,-0.43,0);
+      arm.add(sleeve,hand);
+      brit.add(arm);
+      parts[s<0?'armL':'armR']=arm;
+    }
+
+    // neck + head
+    brit.add(cyl(0.095,0.11,0.09,skinM,0,1.47,0));
+    const head=new THREE.Group(); head.position.y=1.70;
+    const skull=sph(0.26,skinM,0,0,0); skull.scale.y=1.07; head.add(skull);
+    head.add(sph(0.05,skinM,-0.25,0.0,0), sph(0.05,skinM,0.25,0.0,0));     // ears
+    head.add(sph(0.045,skinM,0,-0.04,0.25));                               // nose
+    head.add(sph(0.028,darkM,-0.095,0.045,0.225), sph(0.028,darkM,0.095,0.045,0.225)); // eyes
+    head.add(bx(0.085,0.017,0.02,hairM,-0.095,0.125,0.235), bx(0.085,0.017,0.02,hairM,0.095,0.125,0.235)); // brows
+    const mouth=tor(0.07,0.011,M('#7a4038',0.6),0,-0.10,0.225,1.9);
+    mouth.rotation.z=Math.PI*1.19; head.add(mouth);
+
+    // hair / hats
+    const HS=L.hairStyle;
+    if(HS==='short'||HS==='bun'){
+      const capg=new THREE.SphereGeometry(0.272,24,14,0,Math.PI*2,0,1.25);
+      head.add(mesh(capg,hairM,0,0.02,0));
+    }
+    if(HS==='bun') head.add(sph(0.085,hairM,0,0.17,-0.19));
+    if(HS==='perm'){
+      for(let i=0;i<8;i++){ const a=i/8*Math.PI*2;
+        head.add(sph(0.085,hairM,Math.cos(a)*0.20,0.14,Math.sin(a)*0.20)); }
+      head.add(sph(0.10,hairM,0,0.23,0));
+    }
+    if(HS==='cap'){
+      const crown=cyl(0.275,0.285,0.09,hairM,0,0.175,-0.02); crown.rotation.x=0.10; head.add(crown);
+      head.add(bx(0.30,0.025,0.16,hairM,0,0.115,0.235));
+    }
+    if(HS==='bucket'){
+      head.add(cyl(0.235,0.245,0.16,hairM,0,0.21,0));
+      head.add(cyl(0.26,0.375,0.055,hairM,0,0.115,0));
+    }
+    if(HS==='beanie'){
+      const capg=new THREE.SphereGeometry(0.275,24,14,0,Math.PI*2,0,1.15);
+      head.add(mesh(capg,hairM,0,0.035,0));
+      const band=tor(0.262,0.036,hairM,0,-0.015,0); band.rotation.x=Math.PI/2; head.add(band);
+    }
+    // glasses
+    if(L.glasses==='round'){
+      const gm=M('#3a3a3a',0.35);
+      for(const s of [-1,1]){ const lens=tor(0.062,0.011,gm,0.093*s,0.045,0.24); head.add(lens); }
+      head.add(bx(0.06,0.012,0.012,gm,0,0.045,0.245));
+      for(const s of [-1,1]){ const arm=bx(0.16,0.012,0.012,gm,0.19*s,0.05,0.13); arm.rotation.y=Math.PI/2*0.92*s; head.add(arm); }
+    }
+    if(L.glasses==='sunnies'){
+      const gm=M('#111118',0.25);
+      for(const s of [-1,1]) head.add(bx(0.115,0.075,0.02,gm,0.093*s,0.04,0.235));
+      head.add(bx(0.05,0.02,0.02,gm,0,0.045,0.24));
+    }
+    brit.add(head); parts.head=head; parts.body=torso;
+
+    // archetype hand prop (right hand)
+    const prop=new THREE.Group(); prop.position.set(0,-0.47,0.09);
+    if(archId==='gammon'){                              // pint of bitter
+      prop.add(cyl(0.052,0.044,0.15,M('#d98b2b',0.35),0,0.07,0));
+      prop.add(cyl(0.054,0.054,0.035,M('#f7f0dc',0.9),0,0.165,0));
+    }
+    if(archId==='gent'){                                // furled brolly
+      const shaft=cyl(0.014,0.05,0.52,M('#1d2430',0.6),0,-0.16,0);
+      prop.add(shaft, cyl(0.012,0.012,0.10,M('#8a6642',0.8),0,0.14,0));
+    }
+    if(archId==='liberal'){                             // tote bag
+      prop.add(bx(0.17,0.21,0.045,M('#e8e2d2',0.95),0,-0.14,0));
+      const h=tor(0.07,0.012,M('#c9b78d',0.9),0,-0.02,0,Math.PI); prop.add(h);
+      prop.add(cyl(0.035,0.035,0.012,M('#4a7a43',0.8),0,-0.13,0.03));
+    }
+    if(archId==='nan'){                                 // handbag
+      prop.add(bx(0.17,0.13,0.08,M('#5a2f38',0.7),0,-0.12,0));
+      const h=tor(0.065,0.013,M('#3a2028',0.6),0,-0.03,0,Math.PI); prop.add(h);
+    }
+    if(archId==='vanman'){                              // flask of builder's
+      prop.add(cyl(0.048,0.048,0.17,M('#b0b8c0',0.35),0,-0.08,0));
+      prop.add(cyl(0.05,0.05,0.03,M('#23232b',0.6),0,0.02,0));
+    }
+    if(archId==='student'){                             // pot noodle
+      prop.add(cyl(0.055,0.045,0.12,M('#f2f2f2',0.9),0,-0.10,0));
+      prop.add(cyl(0.056,0.056,0.03,M('#C8102E',0.8),0,-0.07,0));
+    }
+    parts.armR.add(prop);
+
+    scene.add(brit);
+  }
+
+  function size(){
+    const r=holder.getBoundingClientRect();
+    if(r.width>2){ renderer.setSize(r.width,r.height,false); cam.aspect=r.width/r.height; cam.updateProjectionMatrix(); }
+  }
+  new ResizeObserver(size).observe(holder);
+
+  const clock=new THREE.Clock();
+  renderer.setAnimationLoop(()=>{
+    if(!document.getElementById('cas').classList.contains('open')) return;
+    const t=clock.getElapsedTime();
+    if(brit){
+      brit.position.y=Math.sin(t*2.1)*0.012;
+      if(parts.armL) parts.armL.rotation.z=-0.16-Math.sin(t*2.1)*0.05;
+      if(parts.armR) parts.armR.rotation.z=0.16+Math.sin(t*2.1+0.9)*0.05;
+      if(parts.head) parts.head.rotation.y=Math.sin(t*0.6)*0.14;
+      if(parts.body) parts.body.scale.y=1+Math.sin(t*2.1)*0.008;
+    }
+    controls.update();
+    renderer.render(scene,cam);
+  });
+
+  // switch the CAS preview from 2D fallback to 3D
+  document.getElementById('casCv').style.display='none';
+  holder.style.display='block';
+  document.getElementById('spinHint').textContent='⟲ drag to orbit · pinch or scroll to zoom';
+  buildBrit(); size();
+  window.CAS3D={ready:true, refresh(){ buildBrit(); size(); }};
+}catch(err){
+  console.warn('BRITS™ 3D preview unavailable — using 2D fallback.', err);
+  window.CAS3D={ready:false};
+}
+})();
 </script>
 </body>
 </html>
